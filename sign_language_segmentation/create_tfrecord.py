@@ -6,8 +6,7 @@ import numpy as np
 from tqdm import tqdm
 import tensorflow as tf
 
-from argparse import ArgumentParser
-
+import argparse
 import tensorflow_datasets as tfds
 # noinspection PyUnresolvedReferences
 import sign_language_datasets.datasets
@@ -16,7 +15,7 @@ from sign_language_datasets.datasets.dgs_corpus.dgs_utils import get_elan_senten
 
 def parse_args_tfrecord():
 
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
 
     # directories and checkpoints
     parser.add_argument('--data_dir', type=str, required=False, metavar='PATH',
