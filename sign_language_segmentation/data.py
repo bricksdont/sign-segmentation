@@ -134,7 +134,7 @@ def get_datasets(args: argparse.Namespace):
     features.update(TF_POSE_RECORD_DESCRIPTION)
 
     # Dataset iterator
-    dataset = tf.data.TFRecordDataset(filenames=[args.dataset_path])
+    dataset = tf.data.TFRecordDataset(filenames=[args.data_dir])
     dataset = dataset.map(
         lambda serialized: tf.io.parse_single_example(serialized, features))
 

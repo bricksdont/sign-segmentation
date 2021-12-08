@@ -34,7 +34,8 @@ def main(args: argparse.Namespace):
     model = build_model(args)
 
     # Train
-    es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=args.stop_patience)
+    es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=args.stop_patience,
+                       min_delta=args.min_delta)
     mc = ModelCheckpoint(args.model_path, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
 
     with tf.device(args.device):
