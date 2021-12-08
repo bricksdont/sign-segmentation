@@ -1,9 +1,12 @@
+#! /usr/bin/python3
+
 """Code to create tfrecord for training from The Public DGS Corpus."""
 
 import numpy as np
 from tqdm import tqdm
 import tensorflow as tf
-import argparse
+
+from argparse import ArgumentParser
 
 import tensorflow_datasets as tfds
 # noinspection PyUnresolvedReferences

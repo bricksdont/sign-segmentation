@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 """Utilities to load and process a sign language segmentation dataset."""
 
 import argparse

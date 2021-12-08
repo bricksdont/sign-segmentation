@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 """Training script for sign language segmentation."""
 
 import random

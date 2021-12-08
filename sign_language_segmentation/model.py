@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 """Sign language sequence tagging keras model."""
 
 import tensorflow as tf
