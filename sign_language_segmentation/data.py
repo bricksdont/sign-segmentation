@@ -1,12 +1,12 @@
 """Utilities to load and process a sign language segmentation dataset."""
 
+import argparse
 import tensorflow as tf
+
 from pose_format.pose import Pose
 from pose_format.tensorflow.masked.tensor import MaskedTensor
 from pose_format.tensorflow.pose_body import TensorflowPoseBody
 from pose_format.tensorflow.pose_body import TF_POSE_RECORD_DESCRIPTION
-
-from sign_language_segmentation.args import FLAGS
 
 
 def distance(src):
@@ -39,7 +39,7 @@ def load_datum(tfrecord_dict):
 
 
 # TODO normalize shoulders in every frame
-def process_datum(datum, augment=False):
+def process_datum(datum, args: argparse.Namespace, augment=False):
     """Prepare every datum to be an input-output pair for training / eval.
     Supports data augmentation only including frames dropout.
     Frame dropout affects the FPS."""
@@ -52,7 +52,7 @@ def process_datum(datum, augment=False):
     frames = datum["frames"]
 
     if augment:
-        pose, selected_indexes = pose.frame_dropout(FLAGS.frame_dropout_std)
+        pose, selected_indexes = pose.frame_dropout(args.frame_dropout_std)
         tgt = tf.gather(tgt, selected_indexes)
 
         new_frames = tf.cast(tf.size(tgt), dtype=fps.dtype)
@@ -82,26 +82,26 @@ def batch_dataset(dataset, batch_size):
     return dataset.map(prepare_io)
 
 
-def train_pipeline(dataset):
+def train_pipeline(dataset, args: argparse.Namespace):
     """Prepare the training dataset."""
     dataset = dataset.map(load_datum).cache()
     dataset = dataset.repeat()
-    dataset = dataset.map(lambda d: process_datum(d, True))
-    dataset = dataset.shuffle(FLAGS.batch_size)
-    dataset = batch_dataset(dataset, FLAGS.batch_size)
+    dataset = dataset.map(lambda d: process_datum(d, args, True))
+    dataset = dataset.shuffle(args.batch_size)
+    dataset = batch_dataset(dataset, args.batch_size)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
     return dataset
 
 
-def test_pipeline(dataset):
+def test_pipeline(dataset, args: argparse.Namespace):
     """Prepare the test dataset."""
     dataset = dataset.map(load_datum)
-    dataset = dataset.map(process_datum)
-    dataset = batch_dataset(dataset, FLAGS.test_batch_size)
+    dataset = dataset.map(process_datum, args)
+    dataset = batch_dataset(dataset, args.test_batch_size)
     return dataset.cache()
 
 
-def split_dataset(dataset):
+def split_dataset(dataset, args: argparse.Namespace):
     """Split dataset to train, dev, and test."""
 
     def is_dev(x, _):
@@ -118,22 +118,22 @@ def split_dataset(dataset):
     def recover(_, y):
         return y
 
-    train = train_pipeline(dataset.enumerate().filter(is_train).map(recover))
-    dev = test_pipeline(dataset.enumerate().filter(is_dev).map(recover))
-    test = test_pipeline(dataset.enumerate().filter(is_test).map(recover))
+    train = train_pipeline(dataset.enumerate().filter(is_train).map(recover), args)
+    dev = test_pipeline(dataset.enumerate().filter(is_dev).map(recover), args)
+    test = test_pipeline(dataset.enumerate().filter(is_test).map(recover), args)
 
     return train, dev, test
 
 
-def get_datasets():
+def get_datasets(args: argparse.Namespace):
     """Get train, dev, and test datasets."""
     # Set features
     features = {"tags": tf.io.FixedLenFeature([], tf.string)}
     features.update(TF_POSE_RECORD_DESCRIPTION)
 
     # Dataset iterator
-    dataset = tf.data.TFRecordDataset(filenames=[FLAGS.dataset_path])
+    dataset = tf.data.TFRecordDataset(filenames=[args.dataset_path])
     dataset = dataset.map(
         lambda serialized: tf.io.parse_single_example(serialized, features))
 
-    return split_dataset(dataset)
+    return split_dataset(dataset, args)
