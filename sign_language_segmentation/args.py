@@ -38,12 +38,6 @@ def parse_args():
     parser.add_argument('--log_model_off', action='store_true', default=False, help='Turn off wandb logging.')
     parser.add_argument('--wandb_run_name', type=str, default=None, help='Name of wandb run.')
 
-    # Prediction args (not used at the moment)
-    parser.add_argument('--pred_checkpoint', type=str,
-                        metavar='PATH', help="Checkpoint path for prediction")
-    parser.add_argument('--pred_output', type=str,
-                        metavar='PATH', help="Path for saving prediction files")
-
     args = parser.parse_args()
 
     print(args)
