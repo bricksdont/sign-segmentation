@@ -8,6 +8,7 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--device', type=str, default="/GPU:0", help='training device')
     parser.add_argument('--batch_size', type=int, default=8, help='batch size')
+    parser.add_argument('--test_batch_size', type=int, default=1, help='batch size for evaluation')
     parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--save_top_k', type=int, default=1, help='Keep k best checkpoint')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
@@ -24,12 +25,11 @@ def parse_args():
     # data set details
     parser.add_argument('--dataset_path', type=str, default="data", metavar='PATH',
                         help="Where to save data.")
-    parser.add_argument('--download_dataset_only', action="store_true", help='Only download data set (if not in cache already), then exit')
     parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
     parser.add_argument('--input_size', type=int, default=75 * 3, help='Number of pose points')
 
     # directories and checkpoints
-    parser.add_argument('--tfds-dir', type=str, required=False, metavar='PATH',
+    parser.add_argument('--data_dir', type=str, required=False, metavar='PATH',
                         help="Tensorflow dataset directory. Default: $HOME.")
     parser.add_argument('--model_path', type=str, default="checkpoints/model.h5", metavar='PATH',
                         help="Where to save model checkpoints.")
