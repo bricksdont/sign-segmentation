@@ -2,13 +2,17 @@
 
 """Utilities to load and process a sign language segmentation dataset."""
 
+import functools
+import os
 import argparse
 import tensorflow as tf
 
 from pose_format.pose import Pose
+from pose_format.pose_header import PoseHeader
 from pose_format.tensorflow.masked.tensor import MaskedTensor
 from pose_format.tensorflow.pose_body import TensorflowPoseBody
 from pose_format.tensorflow.pose_body import TF_POSE_RECORD_DESCRIPTION
+from pose_format.utils.reader import BufferReader
 
 
 def distance(src):
@@ -17,6 +21,17 @@ def distance(src):
     sum_squares = square.sum(dim=-1).fix_nan()
     sqrt = sum_squares.sqrt().zero_filled()
     return sqrt
+
+
+@functools.lru_cache(maxsize=1)
+def get_openpose_header():
+    """Get pose header with OpenPose components description."""
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    header_path = os.path.join(dir_path, "../assets/openpose.poseheader")
+    f = open(header_path, "rb")
+    reader = BufferReader(f.read())
+    header = PoseHeader.read(reader)
+    return header
 
 
 minimum_fps = tf.constant(1, dtype=tf.float32)

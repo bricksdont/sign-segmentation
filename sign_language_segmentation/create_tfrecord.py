@@ -29,7 +29,7 @@ def parse_args_tfrecord():
 
 def create_tfrecord_dataset(args: argparse.Namespace):
 
-    config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose="holistic")
+    config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose="openpose")
     dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
 
 
