@@ -2,6 +2,7 @@
 
 from argparse import ArgumentParser
 
+
 def parse_args():
 
     parser = ArgumentParser()
@@ -27,7 +28,9 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, default="data", metavar='PATH',
                         help="Where to look for tfrecord dataset.")
     parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
-    parser.add_argument('--input_size', type=int, default=75 * 3, help='Number of pose points')
+    parser.add_argument('--input_size', type=int, default=135, help='Number of pose points')
+    parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
+                        choices=["openpose", "holistic"])
 
     # directories and checkpoints
     parser.add_argument('--model_path', type=str, default="checkpoints/model.h5", metavar='PATH',

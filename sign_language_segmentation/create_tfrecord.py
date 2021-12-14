@@ -13,6 +13,7 @@ import sign_language_datasets.datasets
 from sign_language_datasets.datasets.config import SignDatasetConfig
 from sign_language_datasets.datasets.dgs_corpus.dgs_utils import get_elan_sentences
 
+
 def parse_args_tfrecord():
 
     parser = argparse.ArgumentParser()
@@ -27,18 +28,14 @@ def parse_args_tfrecord():
 
     return args
 
+
 def create_tfrecord_dataset(args: argparse.Namespace):
 
     config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose="openpose")
     dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
 
-
     def time_frame(ms, fps):
         return int(fps * (ms / 1000))
-
-
-    # Body and two hands, ignoring the face
-    body_points = list(range(33)) + list(range(33 + 468, 33 + 468 + 21 * 2))
 
     with tf.io.TFRecordWriter('data.tfrecord') as writer:
         for datum in tqdm(dgs_corpus["train"]):
@@ -46,14 +43,14 @@ def create_tfrecord_dataset(args: argparse.Namespace):
             sentences = get_elan_sentences(elan_path)
 
             for person in ["a", "b"]:
-                frames = len(datum["poses"][person]["data"])
+
                 fps = int(datum["poses"][person]["fps"].numpy())
 
-                pose_data = datum["poses"][person]["data"].numpy()[:, :, body_points, :]
-                pose_conf = datum["poses"][person]["conf"].numpy()[:, :, body_points]
+                pose_data = datum["poses"][person]["data"].numpy()
+                pose_conf = datum["poses"][person]["conf"].numpy()
 
                 bio = np.zeros(datum["poses"][person]["data"].shape[0], dtype=np.int8)
-                timing = np.full(datum["poses"][person]["data"].shape[0], fill_value=-1, dtype=np.float)
+                timing = np.full(datum["poses"][person]["data"].shape[0], fill_value=-1, dtype=np.float32)
 
                 for sentence in sentences:
                     if sentence["participant"].lower() == person:
@@ -82,6 +79,7 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
                 example = tf.train.Example(features=tf.train.Features(feature=features))
                 writer.write(example.SerializeToString())
+
 
 if __name__ == '__main__':
     args = parse_args_tfrecord()
