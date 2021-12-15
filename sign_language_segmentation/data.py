@@ -78,6 +78,8 @@ def process_datum(datum, args: argparse.Namespace, augment=False):
         frames = new_frames
 
     # Shape (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
+    print("pose.body.data.tensor.shape:")
+    print(pose.body.data.tensor.shape)
     assert pose.body.data.tensor.shape[1] == 1
     assert pose.body.data.tensor.shape[3] == 1
 
