@@ -148,8 +148,10 @@ def get_datasets(args: argparse.Namespace):
     features = {"tags": tf.io.FixedLenFeature([], tf.string)}
     features.update(TF_POSE_RECORD_DESCRIPTION)
 
+    tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
+
     # Dataset iterator
-    dataset = tf.data.TFRecordDataset(filenames=[args.data_dir])
+    dataset = tf.data.TFRecordDataset(filenames=[tfrecord_path])
     dataset = dataset.map(
         lambda serialized: tf.io.parse_single_example(serialized, features))
 

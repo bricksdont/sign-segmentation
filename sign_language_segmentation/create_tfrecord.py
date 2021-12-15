@@ -35,53 +35,52 @@ def create_tfrecord_dataset(args: argparse.Namespace):
     config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose="openpose")
     dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
 
-    def time_frame(ms, fps):
+    def miliseconds_to_frame_index(ms, fps):
         return int(fps * (ms / 1000))
 
     tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
 
-    with tf.io.TFRecordWriter(tfrecord_path) as writer:
-        for datum in tqdm(dgs_corpus["train"]):
-            elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
-            sentences = get_elan_sentences(elan_path)
+    if os.path.isfile(tfrecord_path):
+        print("Tfrecord already exists: '%s'" % tfrecord_path)
+        print("Skipping.")
+    else:
 
-            for person in ["a", "b"]:
+        with tf.io.TFRecordWriter(tfrecord_path) as writer:
+            for datum in tqdm(dgs_corpus["train"]):
+                elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
+                sentences = get_elan_sentences(elan_path)
 
-                fps = int(datum["poses"][person]["fps"].numpy())
+                for person in ["a", "b"]:
 
-                pose_data = datum["poses"][person]["data"].numpy()
-                pose_conf = datum["poses"][person]["conf"].numpy()
+                    fps = int(datum["poses"][person]["fps"].numpy())
 
-                bio = np.zeros(datum["poses"][person]["data"].shape[0], dtype=np.int8)
-                timing = np.full(datum["poses"][person]["data"].shape[0], fill_value=-1, dtype=np.float32)
+                    pose_data = datum["poses"][person]["data"].numpy()
+                    pose_conf = datum["poses"][person]["conf"].numpy()
 
-                for sentence in sentences:
-                    if sentence["participant"].lower() == person:
-                        for gloss in sentence["glosses"]:
-                            start_frame = time_frame(gloss["start"], fps)
-                            end_frame = time_frame(gloss["end"], fps)
+                    bio = np.zeros(datum["poses"][person]["data"].shape[0], dtype=np.int8)
 
-                            bio[start_frame] = 2  # B to beginning
-                            bio[start_frame + 1:end_frame + 1] = 1  # I for in
+                    for sentence in sentences:
+                        if sentence["participant"].lower() == person:
+                            for gloss in sentence["glosses"]:
+                                start_frame = miliseconds_to_frame_index(gloss["start"], fps)
+                                end_frame = miliseconds_to_frame_index(gloss["end"], fps)
 
-                            timing[start_frame:end_frame] = np.linspace(start=0, stop=gloss["end"] - gloss["start"],
-                                                                        num=end_frame - start_frame)
+                                bio[start_frame] = 2  # B for beginning
+                                bio[start_frame + 1:end_frame + 1] = 1  # I for in
 
-                tags = bio.tobytes()
-                timing = tf.io.serialize_tensor(timing).numpy()
-                pose_data = tf.io.serialize_tensor(pose_data).numpy()
-                pose_conf = tf.io.serialize_tensor(pose_conf).numpy()
+                    tags = bio.tobytes()
+                    pose_data = tf.io.serialize_tensor(pose_data).numpy()
+                    pose_conf = tf.io.serialize_tensor(pose_conf).numpy()
 
-                features = {
-                    'fps': tf.train.Feature(int64_list=tf.train.Int64List(value=[fps])),
-                    'pose_data': tf.train.Feature(bytes_list=tf.train.BytesList(value=[pose_data])),
-                    'pose_confidence': tf.train.Feature(bytes_list=tf.train.BytesList(value=[pose_conf])),
-                    'tags': tf.train.Feature(bytes_list=tf.train.BytesList(value=[tags])),
-                    'timing': tf.train.Feature(bytes_list=tf.train.BytesList(value=[timing]))
-                }
+                    features = {
+                        'fps': tf.train.Feature(int64_list=tf.train.Int64List(value=[fps])),
+                        'pose_data': tf.train.Feature(bytes_list=tf.train.BytesList(value=[pose_data])),
+                        'pose_confidence': tf.train.Feature(bytes_list=tf.train.BytesList(value=[pose_conf])),
+                        'tags': tf.train.Feature(bytes_list=tf.train.BytesList(value=[tags]))
+                    }
 
-                example = tf.train.Example(features=tf.train.Features(feature=features))
-                writer.write(example.SerializeToString())
+                    example = tf.train.Example(features=tf.train.Features(feature=features))
+                    writer.write(example.SerializeToString())
 
 
 if __name__ == '__main__':
