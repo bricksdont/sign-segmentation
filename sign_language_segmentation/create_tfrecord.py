@@ -47,7 +47,12 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
         with tf.io.TFRecordWriter(tfrecord_path) as writer:
             for datum in tqdm(dgs_corpus["train"]):
+
                 elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
+
+                print()
+                print("elan_path: %s" % elan_path)
+
                 sentences = get_elan_sentences(elan_path)
 
                 for person in ["a", "b"]:
@@ -56,6 +61,9 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
                     pose_data = datum["poses"][person]["data"].numpy()
                     pose_conf = datum["poses"][person]["conf"].numpy()
+
+                    print("pose_data shape: %s" % str(pose_data.shape))
+                    print("pose_conf shape: %s" % str(pose_conf.shape))
 
                     bio = np.zeros(datum["poses"][person]["data"].shape[0], dtype=np.int8)
 
