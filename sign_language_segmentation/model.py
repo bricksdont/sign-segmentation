@@ -15,7 +15,7 @@ def get_model(args: argparse.Namespace):
     model.add(tf.keras.layers.Dropout(args.input_dropout))
 
     # Add LSTM
-    for _ in range(args.encoder_layers):
+    for _ in range(args.num_encoder_layers):
         rnn = tf.keras.layers.LSTM(args.hidden_size, return_sequences=True)
         if args.encoder_bidirectional:
             rnn = tf.keras.layers.Bidirectional(rnn)
