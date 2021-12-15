@@ -9,7 +9,7 @@ import argparse
 def get_model(args: argparse.Namespace):
     """Create keras sequential model following the hyperparameters."""
 
-    model = tf.keras.Sequential(name='tgt')
+    model = tf.keras.Sequential(name='label_frames_as_bio')
 
     # Random feature dropout
     model.add(tf.keras.layers.Dropout(args.input_dropout))
