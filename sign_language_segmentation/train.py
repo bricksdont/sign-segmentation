@@ -7,9 +7,10 @@ import argparse
 
 import tensorflow as tf
 
-from sign_language_segmentation.args import parse_args
-from sign_language_segmentation.data import get_datasets
-from sign_language_segmentation.model import build_model
+from .args import parse_args
+from .data import get_datasets
+from .model import build_model
+
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import load_model
