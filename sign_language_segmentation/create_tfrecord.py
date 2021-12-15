@@ -51,6 +51,7 @@ def create_tfrecord_dataset(args: argparse.Namespace):
                 elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
 
                 print()
+                print("_id: %s" % str(datum["id"]))
                 print("elan_path: %s" % elan_path)
 
                 sentences = get_elan_sentences(elan_path)
