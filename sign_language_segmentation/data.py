@@ -77,7 +77,7 @@ def process_datum(datum, args: argparse.Namespace, augment=False):
         fps = tf.math.maximum(minimum_fps, (new_frames / frames) * fps)
         frames = new_frames
 
-    return {"src": pose.data.tensor, "tgt": tgt}
+    return {"src": pose.body.data.tensor, "tgt": tgt}
 
 
 def prepare_io(datum):
