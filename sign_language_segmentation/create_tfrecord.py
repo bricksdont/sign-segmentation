@@ -3,6 +3,7 @@
 """Code to create tfrecord for training from The Public DGS Corpus."""
 
 import numpy as np
+import os
 from tqdm import tqdm
 import tensorflow as tf
 
@@ -37,7 +38,9 @@ def create_tfrecord_dataset(args: argparse.Namespace):
     def time_frame(ms, fps):
         return int(fps * (ms / 1000))
 
-    with tf.io.TFRecordWriter('data.tfrecord') as writer:
+    tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
+
+    with tf.io.TFRecordWriter(tfrecord_path) as writer:
         for datum in tqdm(dgs_corpus["train"]):
             elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
             sentences = get_elan_sentences(elan_path)
