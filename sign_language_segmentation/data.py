@@ -103,7 +103,9 @@ def train_pipeline(dataset, args: argparse.Namespace):
     """Prepare the training dataset."""
     dataset = dataset.map(load_datum).cache()
     dataset = dataset.repeat()
-    dataset = dataset.map(lambda d: process_datum(d, args, True))
+
+    # TODO: add augmentation back in for training data
+    dataset = dataset.map(lambda d: process_datum(d, args, False))
     dataset = dataset.shuffle(args.batch_size)
     dataset = batch_dataset(dataset, args.batch_size)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
@@ -113,7 +115,8 @@ def train_pipeline(dataset, args: argparse.Namespace):
 def test_pipeline(dataset, args: argparse.Namespace):
     """Prepare the test dataset."""
     dataset = dataset.map(load_datum)
-    dataset = dataset.map(process_datum, args)
+
+    dataset = dataset.map(lambda d: process_datum(d, args, False))
     dataset = batch_dataset(dataset, args.test_batch_size)
     return dataset.cache()
 
