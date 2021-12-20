@@ -79,8 +79,8 @@ def create_tfrecord_dataset(args: argparse.Namespace):
                                 end_frame = miliseconds_to_frame_index(gloss["end"], fps)
 
                                 # temporary workaround
-                                if start_frame > pose_num_frames:
-                                    continue
+                                #if start_frame > pose_num_frames:
+                                #    continue
 
                                 bio[start_frame] = 2  # B for beginning
                                 bio[start_frame + 1:end_frame + 1] = 1  # I for in
