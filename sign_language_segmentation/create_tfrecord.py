@@ -22,6 +22,7 @@ def parse_args_tfrecord():
     # directories and checkpoints
     parser.add_argument('--data_dir', type=str, required=False, metavar='PATH',
                         help="Tensorflow dataset directory. Default: $HOME.")
+    parser.add_argument('--download_max_retries', type=int, default=1, help='Retry tfds download N times.')
 
     args = parser.parse_args()
 
@@ -33,7 +34,20 @@ def parse_args_tfrecord():
 def create_tfrecord_dataset(args: argparse.Namespace):
 
     config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose="openpose")
-    dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
+
+    retries = 0
+
+    while True:
+        try:
+            dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
+        except tfds.download.download_manager.NonMatchingChecksumError:
+            if retries == args.download_max_retries:
+                print("Reached maximum number of download retries. Download failed at some point.")
+                raise
+            else:
+                print("Download failed at some point. Will retry download.")
+                retries += 1
+                continue
 
     def miliseconds_to_frame_index(ms, fps):
         return int(fps * (ms / 1000))
