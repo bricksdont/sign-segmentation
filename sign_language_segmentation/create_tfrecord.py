@@ -40,6 +40,7 @@ def create_tfrecord_dataset(args: argparse.Namespace):
     while True:
         try:
             dgs_corpus = tfds.load('dgs_corpus', builder_kwargs=dict(config=config), data_dir=args.data_dir)
+            break
         except tfds.download.download_manager.NonMatchingChecksumError:
             if retries == args.download_max_retries:
                 print("Reached maximum number of download retries. Download failed at some point.")
@@ -48,6 +49,8 @@ def create_tfrecord_dataset(args: argparse.Namespace):
                 print("Download failed at some point. Will retry download.")
                 retries += 1
                 continue
+
+    print("Finished loading DGS corpus.")
 
     def miliseconds_to_frame_index(ms, fps):
         return int(fps * (ms / 1000))
