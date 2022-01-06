@@ -9,7 +9,7 @@ import logging
 import tensorflow as tf
 
 from arguments import parse_args
-from data import DataLoader
+from data import DataLoader, log_dataset_statistics
 from model import ModelBuilder
 
 from typing import Optional
@@ -52,6 +52,10 @@ def main(args: argparse.Namespace):
 
     train, dev, test = data_loader.get_datasets()
 
+    log_dataset_statistics(train, "train")
+    log_dataset_statistics(dev, "dev")
+    log_dataset_statistics(test, "test")
+
     # Initialize Model
     model_builder = ModelBuilder(input_dropout=args.input_dropout,
                                  encoder_bidirectional=args.encoder_bidirectional,
@@ -74,7 +78,7 @@ def main(args: argparse.Namespace):
                   callbacks=[es, mc])
 
     best_model = load_model(args.model_path)
-    print('Testing')
+    logging.debug('Testing')
     best_model.evaluate(test)
 
 

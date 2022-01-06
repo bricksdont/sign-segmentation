@@ -4,6 +4,7 @@
 
 import functools
 import os
+import logging
 import tensorflow as tf
 
 from typing import Optional
@@ -86,6 +87,45 @@ def optical_flow(src: tf.Tensor, fps: int) -> tf.Tensor:
     src = src * fps
 
     return src
+
+
+def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None:
+    """
+
+    :param dataset:
+    :param name:
+    :return:
+    """
+    logging.debug("Statistics of dataset: '%s'", name)
+
+    num_examples = dataset.cardinality()
+    min_num_frames = 10000
+    max_num_frames = 0
+
+    for index, datum in enumerate(dataset.as_numpy_iterator()):
+
+        example, label = datum
+
+        if index == 0:
+            logging.debug("example.shape:")
+            logging.debug(example.shape)
+            logging.debug("label.shape:")
+            logging.debug(label.shape)
+
+        # (batch, num_frames, num_features)
+        num_frames = example.shape[1]
+
+        if num_frames < min_num_frames:
+            min_num_frames = num_frames
+        if num_frames > max_num_frames:
+            max_num_frames = num_frames
+
+    logging.debug("num_examples:")
+    logging.debug(num_examples)
+    logging.debug("min_num_frames:")
+    logging.debug(min_num_frames)
+    logging.debug("max_num_frames:")
+    logging.debug(max_num_frames)
 
 
 class DataLoader:

@@ -10,9 +10,9 @@ def parse_args():
     # Training Arguments
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--device', type=str, default="/GPU:0", help='training device')
-    parser.add_argument('--batch_size', type=int, default=8, help='batch size')
+    parser.add_argument('--batch_size', type=int, default=4, help='batch size')
     parser.add_argument('--test_batch_size', type=int, default=1, help='batch size for evaluation')
-    parser.add_argument('--learning_rate', type=float, default=1e-3, help='learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
     parser.add_argument('--steps_per_epoch', type=int, default=32, help='Number of batches per epoch')
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping.")
