@@ -56,7 +56,7 @@ class ModelBuilder:
         :return:
         """
         model = self.get_model()
-        model.build(input_shape=(None, None, self.input_size))
+        model.build(input_shape=(None, None, self.input_size * 2))
         model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
