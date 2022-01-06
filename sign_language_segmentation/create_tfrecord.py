@@ -110,7 +110,7 @@ class RecordCReator:
         pose_num_frames = datum["poses"][person]["data"].shape[0]
 
         if pose_num_frames == 0 and self.skip_if_num_frames_zero:
-            return None, None, None, None
+            return None
 
         bio = np.zeros(pose_num_frames, dtype=np.int8)
 
@@ -164,13 +164,15 @@ class RecordCReator:
 
                 for person in ["a", "b"]:
 
-                    fps, pose_data, pose_conf, bio = self.get_data_for_single_person(datum, person, sentences)
+                    data_for_single_person = self.get_data_for_single_person(datum, person, sentences)
 
-                    if None in [fps, pose_data, pose_conf, bio]:
+                    if data_for_single_person is None:
                         skipped_because_num_pose_frames_zero += 1
                         continue
                     else:
                         num_examples += 1
+
+                    fps, pose_data, pose_conf, bio = data_for_single_person
 
                     tags = bio.tobytes()
                     pose_data = tf.io.serialize_tensor(pose_data).numpy()
