@@ -2,13 +2,16 @@
 
 """Code to create tfrecord for training from The Public DGS Corpus."""
 
-import numpy as np
 import os
-from tqdm import tqdm
-import tensorflow as tf
-
 import argparse
+import logging
+
+import numpy as np
+import tensorflow as tf
 import tensorflow_datasets as tfds
+
+from tqdm import tqdm
+
 # noinspection PyUnresolvedReferences
 import sign_language_datasets.datasets
 from sign_language_datasets.datasets.config import SignDatasetConfig
@@ -28,8 +31,6 @@ def parse_args_tfrecord():
                         choices=["gloss", "sentence"])
 
     args = parser.parse_args()
-
-    print(args)
 
     return args
 
@@ -56,20 +57,20 @@ def create_tfrecord_dataset(args: argparse.Namespace):
             break
         except tfds.download.download_manager.NonMatchingChecksumError:
             if retries == args.download_max_retries:
-                print("Reached maximum number of download retries. Download failed at some point.")
+                logging.debug("Reached maximum number of download retries. Download failed at some point.")
                 raise
             else:
-                print("Download failed at some point. Will retry download.")
+                logging.debug("Download failed at some point. Will retry download.")
                 retries += 1
                 continue
 
-    print("Finished loading DGS corpus.")
+    logging.debug("Finished loading DGS corpus.")
 
     tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
 
     if os.path.isfile(tfrecord_path):
-        print("Tfrecord already exists: '%s'" % tfrecord_path)
-        print("Skipping.")
+        logging.debug("Tfrecord already exists: '%s'" % tfrecord_path)
+        logging.debug("Skipping.")
     else:
 
         with tf.io.TFRecordWriter(tfrecord_path) as writer:
@@ -135,4 +136,8 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
 if __name__ == '__main__':
     args = parse_args_tfrecord()
+
+    logging.basicConfig(level=logging.DEBUG)
+    logging.debug(args)
+
     create_tfrecord_dataset(args)

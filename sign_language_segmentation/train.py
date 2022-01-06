@@ -4,6 +4,7 @@
 
 import random
 import argparse
+import logging
 
 import tensorflow as tf
 
@@ -79,4 +80,8 @@ def main(args: argparse.Namespace):
 
 if __name__ == '__main__':
     args = parse_args()
+
+    logging.basicConfig(level=logging.DEBUG)
+    logging.debug(args)
+
     main(args)
