@@ -29,6 +29,7 @@ def parse_args():
                         help="Where to look for tfrecord dataset.")
     parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
     parser.add_argument('--input_size', type=int, default=137, help='Number of pose points')
+    parser.add_argument('--max_num_frames', type=int, default=30000, help='Remove examples with more frames')
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
                         choices=["openpose", "holistic"])
     parser.add_argument('--normalize_pose', action='store_true', default=False, help='Normalize poses by'

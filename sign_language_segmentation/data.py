@@ -109,7 +109,7 @@ def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None
 
             example, label = datum
 
-            logging.debug("Example %d", 1)
+            logging.debug("Example %d", index)
             logging.debug("example.shape:")
             logging.debug(example.shape)
             logging.debug("label.shape:")

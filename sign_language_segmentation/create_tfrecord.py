@@ -89,6 +89,10 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
                     pose_num_frames = datum["poses"][person]["data"].shape[0]
 
+                    if pose_num_frames == 0:
+                        logging.debug("pose_num_frames == 0, skipping")
+                        continue
+
                     bio = np.zeros(pose_num_frames, dtype=np.int8)
 
                     for sentence in sentences:
