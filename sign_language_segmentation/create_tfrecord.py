@@ -106,6 +106,9 @@ def create_tfrecord_dataset(args: argparse.Namespace):
                                 # assume label type is sentence
                                 # get start frame of first gloss, end frame of last gloss
 
+                                if len(glosses) == 0:
+                                    continue
+
                                 first_gloss = glosses[0]
                                 last_gloss = glosses[-1]
 

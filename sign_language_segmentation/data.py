@@ -167,8 +167,6 @@ class DataLoader:
 
         # Shape of pose.body.data.tensor:
         # (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
-        print("pose.body.data.tensor.shape:")
-        print(pose.body.data.tensor.shape)
 
         # (Frames, Points, Dims)
         src = tf.squeeze(pose.body.data.tensor, 1)
