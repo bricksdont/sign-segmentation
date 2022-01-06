@@ -252,13 +252,12 @@ class DataLoader:
         :param dataset:
         :return:
         """
-        dataset = dataset.map(self.load_datum)
+        dataset = dataset.map(self.load_datum).cache()
         dataset = dataset.repeat()
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True))
         dataset = dataset.shuffle(self.batch_size)
         dataset = self.batch_dataset(dataset, self.batch_size)
-        dataset = dataset.cache()
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
 
