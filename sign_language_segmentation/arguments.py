@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument('--input_size', type=int, default=137, help='Number of pose points')
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
                         choices=["openpose", "holistic"])
+    parser.add_argument('--normalize_pose', action='store_true', default=False, help='Normalize poses by'
+                                                                                     'shoulder width.')
+    parser.add_argument('--frame_dropout', action='store_true', default=False, help='Whether to apply frame dropout.')
 
     # directories and checkpoints
     parser.add_argument('--model_path', type=str, default="checkpoints/model.h5", metavar='PATH',

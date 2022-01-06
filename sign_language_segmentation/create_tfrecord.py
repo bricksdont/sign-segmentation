@@ -23,12 +23,25 @@ def parse_args_tfrecord():
     parser.add_argument('--data_dir', type=str, required=False, metavar='PATH',
                         help="Tensorflow dataset directory. Default: $HOME.")
     parser.add_argument('--download_max_retries', type=int, default=1, help='Retry tfds download N times.')
+    parser.add_argument('--label_type', type=str, default="sentence", help='Whether BIO labels apply to'
+                                                                           'individual glosses or entire sentences',
+                        choices=["gloss", "sentence"])
 
     args = parser.parse_args()
 
     print(args)
 
     return args
+
+
+def miliseconds_to_frame_index(ms: int, fps: int) -> int:
+    """
+
+    :param ms:
+    :param fps:
+    :return:
+    """
+    return int(fps * (ms / 1000))
 
 
 def create_tfrecord_dataset(args: argparse.Namespace):
@@ -51,9 +64,6 @@ def create_tfrecord_dataset(args: argparse.Namespace):
                 continue
 
     print("Finished loading DGS corpus.")
-
-    def miliseconds_to_frame_index(ms, fps):
-        return int(fps * (ms / 1000))
 
     tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
 
@@ -82,13 +92,25 @@ def create_tfrecord_dataset(args: argparse.Namespace):
 
                     for sentence in sentences:
                         if sentence["participant"].lower() == person:
-                            for gloss in sentence["glosses"]:
-                                start_frame = miliseconds_to_frame_index(gloss["start"], fps)
-                                end_frame = miliseconds_to_frame_index(gloss["end"], fps)
 
-                                # temporary workaround
-                                #if start_frame > pose_num_frames:
-                                #    continue
+                            glosses = sentence["glosses"]
+
+                            if args.label_type == "gloss":
+                                for gloss in glosses:
+                                    start_frame = miliseconds_to_frame_index(gloss["start"], fps)
+                                    end_frame = miliseconds_to_frame_index(gloss["end"], fps)
+
+                                    bio[start_frame] = 2  # B for beginning
+                                    bio[start_frame + 1:end_frame + 1] = 1  # I for in
+                            else:
+                                # assume label type is sentence
+                                # get start frame of first gloss, end frame of last gloss
+
+                                first_gloss = glosses[0]
+                                last_gloss = glosses[-1]
+
+                                start_frame = miliseconds_to_frame_index(first_gloss["start"], fps)
+                                end_frame = miliseconds_to_frame_index(last_gloss["end"], fps)
 
                                 bio[start_frame] = 2  # B for beginning
                                 bio[start_frame + 1:end_frame + 1] = 1  # I for in

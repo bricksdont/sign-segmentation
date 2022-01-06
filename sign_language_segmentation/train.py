@@ -7,32 +7,58 @@ import argparse
 
 import tensorflow as tf
 
-from args import parse_args
-from data import get_datasets
-from model import build_model
+from arguments import parse_args
+from data import DataLoader
+from model import ModelBuilder
+
+from typing import Optional
 
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import load_model
 
 
-def set_seed(args: argparse.Namespace):
-    """Set seed for deterministic random number generation."""
-    seed = args.seed if args.seed is not None else random.randint(0, 1000)
+def set_seed(seed: Optional[int] = None):
+    """
+    Set seed for deterministic random number generation.
+
+    :param seed:
+    :return:
+    """
+    if seed is None:
+        seed = random.randint(0, 1000)
     tf.random.set_seed(seed)
     random.seed(seed)
 
 
 def main(args: argparse.Namespace):
-    """Keras training loop with early-stopping and model checkpoint."""
+    """
+    Keras training loop with early-stopping and model checkpoint.
 
-    set_seed(args)
+    :param args:
+    :return:
+    """
+
+    set_seed(args.seed)
 
     # Initialize Dataset
-    train, dev, test = get_datasets(args)
+    data_loader = DataLoader(data_dir=args.data_dir,
+                             batch_size=args.batch_size,
+                             test_batch_size=args.test_batch_size,
+                             normalize_pose=args.normalize_pose,
+                             frame_dropout=args.frame_dropout,
+                             frame_dropout_std=args.frame_dropout_std)
+
+    train, dev, test = data_loader.get_datasets()
 
     # Initialize Model
-    model = build_model(args)
+    model_builder = ModelBuilder(input_dropout=args.input_dropout,
+                                 encoder_bidirectional=args.encoder_bidirectional,
+                                 hidden_size=args.hidden_size,
+                                 input_size=args.input_size,
+                                 learning_rate=args.learning_rate,
+                                 num_encoder_layers=args.num_encoder_layers)
+    model = model_builder.build_model()
 
     # Train
     es = EarlyStopping(monitor='val_accuracy', mode='max', verbose=1, patience=args.patience,
