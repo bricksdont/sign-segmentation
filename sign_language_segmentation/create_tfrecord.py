@@ -109,7 +109,7 @@ class RecordCReator:
 
         pose_num_frames = datum["poses"][person]["data"].shape[0]
 
-        if len(pose_num_frames) == 0 and self.skip_if_num_frames_zero:
+        if pose_num_frames == 0 and self.skip_if_num_frames_zero:
             return None, None, None, None
 
         bio = np.zeros(pose_num_frames, dtype=np.int8)
