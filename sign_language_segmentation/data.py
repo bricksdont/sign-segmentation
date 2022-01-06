@@ -105,24 +105,28 @@ def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None
 
     for index, datum in enumerate(dataset.as_numpy_iterator()):
 
-        example, label = datum
-
         if index < 2:
+
+            example, label = datum
+
             logging.debug("Example %d", 1)
             logging.debug("example.shape:")
             logging.debug(example.shape)
             logging.debug("label.shape:")
             logging.debug(label.shape)
 
-        # (batch_size, num_frames, num_features)
-        batch_size, num_frames, num_features = example.shape
+            # (batch_size, num_frames, num_features)
+            batch_size, num_frames, num_features = example.shape
 
-        logging.debug("batch_size:")
-        logging.debug(batch_size)
-        logging.debug("num_frames:")
-        logging.debug(num_frames)
-        logging.debug("num_features:")
-        logging.debug(num_features)
+            logging.debug("batch_size:")
+            logging.debug(batch_size)
+            logging.debug("num_frames:")
+            logging.debug(num_frames)
+            logging.debug("num_features:")
+            logging.debug(num_features)
+
+        else:
+            break
 
 
 class DataLoader:
