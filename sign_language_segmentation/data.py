@@ -227,7 +227,7 @@ class DataLoader:
             pose.normalize_distribution(axis=(0, 1))
 
         # (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
-        src = pose.body.data.tensor
+        src = pose.body.data
 
         # (Frames, Points, Dims)
         src = src.squeeze(axis=1)

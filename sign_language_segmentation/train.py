@@ -43,7 +43,9 @@ def main(args: argparse.Namespace):
     set_seed(args.seed)
 
     # Initialize Dataset
+    logging.debug("###############")
     logging.debug("Loading dataset")
+    logging.debug("###############")
 
     data_loader = DataLoader(data_dir=args.data_dir,
                              batch_size=args.batch_size,
@@ -62,7 +64,9 @@ def main(args: argparse.Namespace):
     log_dataset_statistics(test, "test")
 
     # Initialize Model
+    logging.debug("##############")
     logging.debug("Building model")
+    logging.debug("##############")
 
     model_builder = ModelBuilder(input_dropout=args.input_dropout,
                                  encoder_bidirectional=args.encoder_bidirectional,
@@ -77,6 +81,10 @@ def main(args: argparse.Namespace):
                        min_delta=args.min_delta)
     mc = ModelCheckpoint(args.model_path, monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
 
+    logging.debug("##############")
+    logging.debug('Start training')
+    logging.debug("##############")
+
     with tf.device(args.device):
         model.fit(train,
                   epochs=args.epochs,
@@ -85,7 +93,11 @@ def main(args: argparse.Namespace):
                   callbacks=[es, mc])
 
     best_model = load_model(args.model_path)
-    logging.debug('Testing')
+
+    logging.debug("#############")
+    logging.debug('Start testing')
+    logging.debug("#############")
+
     best_model.evaluate(test)
 
 
