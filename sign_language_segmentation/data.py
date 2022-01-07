@@ -89,32 +89,6 @@ def optical_flow(src: tf.Tensor, fps: tf.Tensor) -> tf.Tensor:
     return src
 
 
-def scale(src: tf.Tensor) -> tf.Tensor:
-    """
-    Applies standard scaling. Scales poses to zero mean and unit variance over time, separately for
-    x and y dimensions.
-
-    :param src: Shape (Frames, Points, Dims)
-    :return:
-    """
-    values_x = src[:, :, 0]
-    values_y = src[:, :, 1]
-
-    mean_x = tf.math.reduce_mean(values_x)
-    std_x = tf.math.reduce_std(values_x)
-
-    mean_y = tf.math.reduce_mean(values_y)
-    std_y = tf.math.reduce_std(values_y)
-
-    new_x = (values_x - mean_x) / std_x
-    new_y = (values_y - mean_y) / std_y
-
-    src[:, :, 0] = new_x
-    src[:, :, 1] = new_y
-
-    return src
-
-
 def get_dataset_size(dataset: tf.data.Dataset) -> int:
     """
 
@@ -222,7 +196,7 @@ class DataLoader:
     def process_datum(self, datum: dict, is_train: bool) -> dict:
         """
         Prepare every datum to be an input-output pair for training / eval.
-        Supports data augmentation only including frames dropout.
+        Supports frame dropout and different kinds of normalization.
         Frame dropout affects the FPS.
 
         :param datum:
@@ -248,17 +222,21 @@ class DataLoader:
                 p2=("pose_keypoints_2d", "LShoulder")
             ))
 
-        # Shape of pose.body.data.tensor:
+        if self.scale_pose:
+            # TODO: perhaps also average over all keypoints as Bull et al?
+            pose.normalize_distribution(axis=(0, 1))
+
         # (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
+        src = pose.body.data.tensor
 
         # (Frames, Points, Dims)
-        src = tf.squeeze(pose.body.data.tensor, 1)
-
-        if self.scale_pose:
-            src = scale(src)
+        src = src.squeeze(axis=1)
 
         # (Frames, Points * Dims)
-        src = tf.reshape(src, [-1, 137 * 2])
+        src = src.reshape(shape=(-1, 137 * 2))
+
+        # remove Nan values
+        src = src.fix_nan().zero_filled()
 
         return {"src": src, "tgt": tgt}
 
@@ -292,6 +270,8 @@ class DataLoader:
 
     def maybe_apply_max_num_frames_strategy(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
+        If a maximum number of frames is defined, applies a specific strategy (removing, splitting
+        or truncating) to examples that have too many frames.
 
         :param dataset:
         :return:

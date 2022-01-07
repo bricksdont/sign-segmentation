@@ -1,8 +1,8 @@
 tensorflow
 tensorflow_datasets
-git+https://github.com/bricksdont/datasets.git@fix_openpose
+git+https://github.com/sign-language-processing/datasets.git
 pympi-ling
-git+https://github.com/bricksdont/pose-format.git@fix_openpose_missing_frames
+pose-format>=0.0.6
 tqdm
 absl-py
 numpy
