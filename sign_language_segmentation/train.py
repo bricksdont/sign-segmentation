@@ -43,12 +43,17 @@ def main(args: argparse.Namespace):
     set_seed(args.seed)
 
     # Initialize Dataset
+    logging.debug("Loading dataset")
+
     data_loader = DataLoader(data_dir=args.data_dir,
                              batch_size=args.batch_size,
                              test_batch_size=args.test_batch_size,
                              normalize_pose=args.normalize_pose,
                              frame_dropout=args.frame_dropout,
-                             frame_dropout_std=args.frame_dropout_std)
+                             frame_dropout_std=args.frame_dropout_std,
+                             scale_pose=args.scale_pose,
+                             max_num_frames=args.max_num_frames,
+                             max_num_frames_strategy=args.max_num_frames_strategy)
 
     train, dev, test = data_loader.get_datasets()
 
@@ -57,6 +62,8 @@ def main(args: argparse.Namespace):
     log_dataset_statistics(test, "test")
 
     # Initialize Model
+    logging.debug("Building model")
+
     model_builder = ModelBuilder(input_dropout=args.input_dropout,
                                  encoder_bidirectional=args.encoder_bidirectional,
                                  hidden_size=args.hidden_size,

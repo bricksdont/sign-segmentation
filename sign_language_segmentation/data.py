@@ -7,7 +7,7 @@ import os
 import logging
 import tensorflow as tf
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from pose_format.pose import Pose
 from pose_format.pose_header import PoseHeader
@@ -65,7 +65,7 @@ def distance(src: tf.Tensor) -> tf.Tensor:
     return sqrt
 
 
-def optical_flow(src: tf.Tensor, fps: int) -> tf.Tensor:
+def optical_flow(src: tf.Tensor, fps: tf.Tensor) -> tf.Tensor:
     """
     Calculate the optical flow norm between frames, normalized by fps.
 
@@ -89,6 +89,41 @@ def optical_flow(src: tf.Tensor, fps: int) -> tf.Tensor:
     return src
 
 
+def scale(src: tf.Tensor) -> tf.Tensor:
+    """
+    Applies standard scaling. Scales poses to zero mean and unit variance over time, separately for
+    x and y dimensions.
+
+    :param src: Shape (Frames, Points, Dims)
+    :return:
+    """
+    values_x = src[:, :, 0]
+    values_y = src[:, :, 1]
+
+    mean_x = tf.math.reduce_mean(values_x)
+    std_x = tf.math.reduce_std(values_x)
+
+    mean_y = tf.math.reduce_mean(values_y)
+    std_y = tf.math.reduce_std(values_y)
+
+    new_x = (values_x - mean_x) / std_x
+    new_y = (values_y - mean_y) / std_y
+
+    src[:, :, 0] = new_x
+    src[:, :, 1] = new_y
+
+    return src
+
+
+def get_dataset_size(dataset: tf.data.Dataset) -> int:
+    """
+
+    :param dataset:
+    :return:
+    """
+    return int(dataset.reduce(0, lambda x, y: x+1).numpy())
+
+
 def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None:
     """
 
@@ -98,7 +133,7 @@ def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None
     """
     logging.debug("Statistics of dataset: '%s'", name)
 
-    num_examples = dataset.cardinality()
+    num_examples = get_dataset_size(dataset)
 
     logging.debug("num_examples:")
     logging.debug(num_examples)
@@ -132,7 +167,8 @@ def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None
 class DataLoader:
 
     def __init__(self, data_dir: str, batch_size: int, test_batch_size: int, normalize_pose: bool,
-                  frame_dropout: bool, frame_dropout_std: float):
+                 frame_dropout: bool, frame_dropout_std: float, scale_pose: bool, max_num_frames: int,
+                 max_num_frames_strategy: str):
         """
 
         :param data_dir:
@@ -141,6 +177,9 @@ class DataLoader:
         :param normalize_pose:
         :param frame_dropout:
         :param frame_dropout_std:
+        :param scale_pose:
+        :param max_num_frames:
+        :param max_num_frames_strategy:
         """
 
         self.data_dir = data_dir
@@ -149,6 +188,9 @@ class DataLoader:
         self.normalize_pose = normalize_pose
         self.frame_dropout = frame_dropout
         self.frame_dropout_std = frame_dropout_std
+        self.scale_pose = scale_pose
+        self.max_num_frames = max_num_frames
+        self.max_num_frames_strategy = max_num_frames_strategy
 
         self.minimum_fps = tf.constant(1, dtype=tf.float32)
 
@@ -212,12 +254,15 @@ class DataLoader:
         # (Frames, Points, Dims)
         src = tf.squeeze(pose.body.data.tensor, 1)
 
+        if self.scale_pose:
+            src = scale(src)
+
         # (Frames, Points * Dims)
         src = tf.reshape(src, [-1, 137 * 2])
 
         return {"src": src, "tgt": tgt}
 
-    def prepare_io(self, datum):
+    def prepare_io(self, datum: dict):
         """
         Convert dictionary into input-output tuple for Keras.
 
@@ -229,7 +274,7 @@ class DataLoader:
 
         return src, tgt
 
-    def batch_dataset(self, dataset, batch_size: int):
+    def batch_dataset(self, dataset: tf.data.Dataset, batch_size: int) -> tf.data.Dataset:
         """
         Batch and pad a dataset.
 
@@ -245,7 +290,28 @@ class DataLoader:
 
         return dataset.map(self.prepare_io)
 
-    def train_pipeline(self, dataset):
+    def maybe_apply_max_num_frames_strategy(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
+        """
+
+        :param dataset:
+        :return:
+        """
+        num_examples_before = get_dataset_size(dataset)
+
+        if self.max_num_frames > -1:
+            if self.max_num_frames_strategy == "remove":
+                dataset = dataset.filter(lambda x, y: x.shape[-2] <= self.max_num_frames)
+            else:
+                raise NotImplementedError
+
+            num_examples_after = get_dataset_size(dataset)
+
+            logging.debug("Number of examples before/after applying max_num_frames strategy: %d/%d",
+                          num_examples_before, num_examples_after)
+
+        return dataset
+
+    def train_pipeline(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
         Prepare the training dataset.
 
@@ -258,10 +324,13 @@ class DataLoader:
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True))
         dataset = dataset.shuffle(self.batch_size)
         dataset = self.batch_dataset(dataset, self.batch_size)
+
+        dataset = self.maybe_apply_max_num_frames_strategy(dataset)
+
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
 
-    def test_pipeline(self, dataset):
+    def test_pipeline(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
         """
         Prepare the test dataset.
 
@@ -272,20 +341,23 @@ class DataLoader:
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
         dataset = self.batch_dataset(dataset, self.test_batch_size)
+
+        dataset = self.maybe_apply_max_num_frames_strategy(dataset)
+
         return dataset.cache()
 
-    def split_dataset(self, dataset):
+    def split_dataset(self, dataset: tf.data.Dataset) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset]:
         """Split dataset to train, dev, and test."""
 
-        def is_dev(x, _):
+        def is_dev(x, _) -> bool:
             # Every 7th item
             return x % 8 == 6
 
-        def is_test(x, _):
+        def is_test(x, _) -> bool:
             # Every 8th item
             return x % 8 == 7
 
-        def is_train(x, y):
+        def is_train(x, y) -> bool:
             return not is_test(x, y) and not is_dev(x, y)
 
         def recover(_, y):
@@ -297,7 +369,7 @@ class DataLoader:
 
         return train, dev, test
 
-    def get_datasets(self):
+    def get_datasets(self) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset]:
         """
         Get train, dev, and test datasets.
 

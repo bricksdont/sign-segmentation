@@ -16,7 +16,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
     parser.add_argument('--steps_per_epoch', type=int, default=32, help='Number of batches per epoch')
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping.")
-    parser.add_argument("--min_delta", type=float, default=0.0, help="Minimum delta for improvement with early stopping. Default: 0.")
+    parser.add_argument("--min_delta", type=float, default=0.0, help="Minimum delta for improvement with early stopping."
+                                                                     "Default: 0.")
 
     # sizes and number of layers
     parser.add_argument('--input_dropout', type=float, default=0.3, help='Input dropout rate')
@@ -29,11 +30,19 @@ def parse_args():
                         help="Where to look for tfrecord dataset.")
     parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
     parser.add_argument('--input_size', type=int, default=137, help='Number of pose points')
-    parser.add_argument('--max_num_frames', type=int, default=30000, help='Remove examples with more frames')
+    parser.add_argument('--desired_fps', type=int, default=50, help='Convert to this framerate')
+    parser.add_argument('--max_num_frames', type=int, default=-1, help='Remove, truncate or split examples with more '
+                                                                         'frames (behaviour depends '
+                                                                          'on --max_num_frames_strategy and --desired_fps)')
+    parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='Type of pose features',
+                        choices=["remove", "split", "truncate"])
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
                         choices=["openpose", "holistic"])
     parser.add_argument('--normalize_pose', action='store_true', default=False, help='Normalize poses by'
                                                                                      'shoulder width.')
+    parser.add_argument('--scale_pose', action='store_true', default=False, help='Scale pose to zero mean and'
+                                                                                 'unit variance, individually for'
+                                                                                 'x and y dimensions.')
     parser.add_argument('--frame_dropout', action='store_true', default=False, help='Whether to apply frame dropout.')
 
     # directories and checkpoints
