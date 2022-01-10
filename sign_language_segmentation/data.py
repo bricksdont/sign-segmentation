@@ -17,6 +17,9 @@ from pose_format.tensorflow.pose_body import TF_POSE_RECORD_DESCRIPTION
 from pose_format.utils.reader import BufferReader
 
 
+TFRECORD_FILE_NAME = "data.tfrecord"
+
+
 @functools.lru_cache(maxsize=1)
 def get_openpose_header(header_path: Optional[str] = None):
     """
@@ -100,6 +103,7 @@ def get_dataset_size(dataset: tf.data.Dataset) -> int:
 
 def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None:
     """
+    Log size of dataset. Does not work with infinite datasets (dataset.repeat()).
 
     :param dataset:
     :param name:
@@ -268,17 +272,21 @@ class DataLoader:
 
         return dataset.map(self.prepare_io)
 
-    def maybe_apply_max_num_frames_strategy(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
+    def maybe_apply_max_num_frames_strategy(self,
+                                            dataset: tf.data.Dataset,
+                                            dataset_name: str) -> tf.data.Dataset:
         """
         If a maximum number of frames is defined, applies a specific strategy (removing, splitting
         or truncating) to examples that have too many frames.
 
         :param dataset:
+        :param dataset_name:
         :return:
         """
         num_examples_before = get_dataset_size(dataset)
 
         if self.max_num_frames > -1:
+            logging.debug("Filtering dataset '%s'...", dataset_name)
             if self.max_num_frames_strategy == "remove":
                 dataset = dataset.filter(lambda x, y: x.shape[-2] <= self.max_num_frames)
             else:
@@ -298,31 +306,40 @@ class DataLoader:
         :param dataset:
         :return:
         """
-        dataset = dataset.map(self.load_datum).cache()
-        dataset = dataset.repeat()
+        logging.debug("Preparing training pipeline...")
 
-        dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True))
-        dataset = dataset.shuffle(self.batch_size)
+        dataset = dataset.map(self.load_datum)
+
+        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
+
+        dataset = dataset.cache()
+
+        dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
+                              num_parallel_calls=tf.data.experimental.AUTOTUNE)
+        dataset = dataset.repeat().shuffle(self.batch_size)
         dataset = self.batch_dataset(dataset, self.batch_size)
-
-        dataset = self.maybe_apply_max_num_frames_strategy(dataset)
 
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
 
-    def test_pipeline(self, dataset: tf.data.Dataset) -> tf.data.Dataset:
+    def test_pipeline(self,
+                      dataset: tf.data.Dataset,
+                      dataset_name: str) -> tf.data.Dataset:
         """
         Prepare the test dataset.
 
         :param dataset:
+        :param dataset_name:
         :return:
         """
+        logging.debug("Preparing %s pipeline...", dataset_name)
+
         dataset = dataset.map(self.load_datum)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
         dataset = self.batch_dataset(dataset, self.test_batch_size)
 
-        dataset = self.maybe_apply_max_num_frames_strategy(dataset)
+        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
 
         return dataset.cache()
 
@@ -344,8 +361,8 @@ class DataLoader:
             return y
 
         train = self.train_pipeline(dataset.enumerate().filter(is_train).map(recover))
-        dev = self.test_pipeline(dataset.enumerate().filter(is_dev).map(recover))
-        test = self.test_pipeline(dataset.enumerate().filter(is_test).map(recover))
+        dev = self.test_pipeline(dataset.enumerate().filter(is_dev).map(recover), dataset_name="dev")
+        test = self.test_pipeline(dataset.enumerate().filter(is_test).map(recover), dataset_name="test")
 
         return train, dev, test
 
@@ -359,7 +376,7 @@ class DataLoader:
         features = {"tags": tf.io.FixedLenFeature([], tf.string)}
         features.update(TF_POSE_RECORD_DESCRIPTION)
 
-        tfrecord_path = os.path.join(self.data_dir, "data.tfrecord")
+        tfrecord_path = os.path.join(self.data_dir, TFRECORD_FILE_NAME)
 
         # Dataset iterator
         dataset = tf.data.TFRecordDataset(filenames=[tfrecord_path])

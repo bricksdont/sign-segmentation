@@ -2,6 +2,7 @@ tensorflow
 tensorflow_datasets
 git+https://github.com/sign-language-processing/datasets.git
 pympi-ling
+git+https://github.com/bricksdont/pose-format.git@fix_tf_tensor_reshape
 pose-format>=0.0.6
 tqdm
 absl-py
