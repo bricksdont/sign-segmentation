@@ -101,7 +101,8 @@ def get_dataset_size(dataset: tf.data.Dataset) -> int:
     return int(dataset.reduce(0, lambda x, y: x+1).numpy())
 
 
-def log_raw_datum_examples(dataset: tf.data.Dataset):
+def log_raw_datum_examples(dataset: tf.data.Dataset,
+                           max_index: int = 2):
     """
 
     :param dataset:
@@ -111,7 +112,7 @@ def log_raw_datum_examples(dataset: tf.data.Dataset):
                       "pose_data_mask.shape=%s, pose_confidence.shape=%s"
 
     for index, datum in enumerate(dataset.as_numpy_iterator()):
-        if index == 2:
+        if index == max_index:
             break
         logging.debug(template_string,
                       index,
@@ -331,28 +332,19 @@ class DataLoader:
         dataset = dataset.map(self.load_datum).cache()
 
         logging.debug("AFTER load_datum")
-        log_raw_datum_examples(dataset)
+        log_raw_datum_examples(dataset, max_index=100)
 
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
 
         logging.debug("AFTER maybe_apply_max_num_frames_strategy")
-        log_raw_datum_examples(dataset)
+        log_raw_datum_examples(dataset, max_index=100)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
                               num_parallel_calls=tf.data.experimental.AUTOTUNE)
 
-        logging.debug("AFTER process_datum")
-        log_datum_examples(dataset)
-
         dataset = dataset.repeat().shuffle(self.batch_size)
 
-        logging.debug("AFTER repeat().shuffle()")
-        log_datum_examples(dataset)
-
         dataset = self.batch_dataset(dataset, self.batch_size)
-
-        logging.debug("AFTER batching")
-        log_datum_examples(dataset)
 
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
