@@ -101,6 +101,26 @@ def get_dataset_size(dataset: tf.data.Dataset) -> int:
     return int(dataset.reduce(0, lambda x, y: x+1).numpy())
 
 
+def log_raw_datum_examples(dataset: tf.data.Dataset):
+    """
+
+    :param dataset:
+    :return:
+    """
+    template_string = "\tRaw datum %d: fps=%s, frames=%s, tgt.shape=%s, pose_data_tensor.shape=%s, " \
+                      "pose_data_mask.shape=%s, pose_confidence.shape=%s"
+
+    for index, datum in enumerate(dataset.as_numpy_iterator()[:2]):
+        logging.debug(template_string,
+                      index,
+                      datum["fps"],
+                      datum["frames"],
+                      datum["tgt"].shape,
+                      datum["pose_data_tensor"].shape,
+                      datum["pose_data_mask"].shape,
+                      datum["pose_confidence"].shape)
+
+
 def log_dataset_statistics(dataset: tf.data.Dataset,
                            name: str = "data",
                            infinite: bool = False) -> None:
@@ -121,15 +141,9 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
     else:
         logging.debug("\tWill not compute number of batches in dataset since it is infinite.")
 
-    for index, datum in enumerate(dataset.as_numpy_iterator()):
-
-        if index < 2:
-
-            example, label = datum
-            logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
-
-        else:
-            break
+    for index, datum in enumerate(dataset.as_numpy_iterator()[:2]):
+        example, label = datum
+        logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
 
 
 class DataLoader:
@@ -303,6 +317,8 @@ class DataLoader:
 
         dataset = dataset.map(self.load_datum).cache()
 
+        log_raw_datum_examples(dataset)
+
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
@@ -326,6 +342,8 @@ class DataLoader:
         logging.debug("Preparing %s pipeline...", dataset_name)
 
         dataset = dataset.map(self.load_datum)
+
+        log_raw_datum_examples(dataset)
 
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
 
