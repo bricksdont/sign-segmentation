@@ -308,6 +308,7 @@ class DataLoader:
         :param dataset_name:
         :return:
         """
+        @tf.function
         def length_is_acceptable(example: dict) -> bool:
             return self.max_num_frames >= example["frames"] >= self.min_num_frames
 
