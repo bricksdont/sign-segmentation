@@ -123,6 +123,19 @@ def log_raw_datum_examples(dataset: tf.data.Dataset):
                       datum["pose_confidence"].shape)
 
 
+def log_datum_examples(dataset: tf.data.Dataset):
+    """
+
+    :param dataset:
+    :return:
+    """
+    for index, datum in enumerate(dataset.as_numpy_iterator()):
+        if index == 2:
+            break
+        example, label = datum
+        logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
+
+
 def log_dataset_statistics(dataset: tf.data.Dataset,
                            name: str = "data",
                            infinite: bool = False) -> None:
@@ -143,11 +156,7 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
     else:
         logging.debug("\tWill not compute number of batches in dataset since it is infinite.")
 
-    for index, datum in enumerate(dataset.as_numpy_iterator()):
-        if index == 2:
-            break
-        example, label = datum
-        logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
+    log_datum_examples(dataset)
 
 
 class DataLoader:
@@ -321,14 +330,29 @@ class DataLoader:
 
         dataset = dataset.map(self.load_datum).cache()
 
+        logging.debug("AFTER load_datum")
         log_raw_datum_examples(dataset)
 
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
 
+        logging.debug("AFTER maybe_apply_max_num_frames_strategy")
+        log_raw_datum_examples(dataset)
+
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
                               num_parallel_calls=tf.data.experimental.AUTOTUNE)
+
+        logging.debug("AFTER process_datum")
+        log_datum_examples(dataset)
+
         dataset = dataset.repeat().shuffle(self.batch_size)
+
+        logging.debug("AFTER repeat().shuffle()")
+        log_datum_examples(dataset)
+
         dataset = self.batch_dataset(dataset, self.batch_size)
+
+        logging.debug("AFTER batching")
+        log_datum_examples(dataset)
 
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
@@ -350,6 +374,8 @@ class DataLoader:
         log_raw_datum_examples(dataset)
 
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
+
+        log_raw_datum_examples(dataset)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
         dataset = self.batch_dataset(dataset, self.test_batch_size)
