@@ -105,7 +105,7 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
                            name: str = "data",
                            infinite: bool = False) -> None:
     """
-    Log size of dataset.
+    Log size of dataset and the shapes of the first two examples and labels.
 
     :param dataset:
     :param name:
@@ -115,34 +115,18 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
     logging.debug("Statistics of dataset: '%s'", name)
 
     if not infinite:
-        num_examples = get_dataset_size(dataset)
+        num_batches = get_dataset_size(dataset)
 
-        logging.debug("num_examples:")
-        logging.debug(num_examples)
+        logging.debug("\tnum_batches: %d", num_batches)
     else:
-        logging.debug("Will not compute number of examples in dataset since it is infinite.")
+        logging.debug("\tWill not compute number of batches in dataset since it is infinite.")
 
     for index, datum in enumerate(dataset.as_numpy_iterator()):
 
         if index < 2:
 
             example, label = datum
-
-            logging.debug("Example %d", index)
-            logging.debug("example.shape:")
-            logging.debug(example.shape)
-            logging.debug("label.shape:")
-            logging.debug(label.shape)
-
-            # (batch_size, num_frames, num_features)
-            batch_size, num_frames, num_features = example.shape
-
-            logging.debug("batch_size:")
-            logging.debug(batch_size)
-            logging.debug("num_frames:")
-            logging.debug(num_frames)
-            logging.debug("num_features:")
-            logging.debug(num_features)
+            logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
 
         else:
             break
