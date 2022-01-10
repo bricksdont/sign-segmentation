@@ -110,7 +110,9 @@ def log_raw_datum_examples(dataset: tf.data.Dataset):
     template_string = "\tRaw datum %d: fps=%s, frames=%s, tgt.shape=%s, pose_data_tensor.shape=%s, " \
                       "pose_data_mask.shape=%s, pose_confidence.shape=%s"
 
-    for index, datum in enumerate(dataset.as_numpy_iterator()[:2]):
+    for index, datum in enumerate(dataset.as_numpy_iterator()):
+        if index == 2:
+            break
         logging.debug(template_string,
                       index,
                       datum["fps"],
@@ -141,7 +143,9 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
     else:
         logging.debug("\tWill not compute number of batches in dataset since it is infinite.")
 
-    for index, datum in enumerate(dataset.as_numpy_iterator()[:2]):
+    for index, datum in enumerate(dataset.as_numpy_iterator()):
+        if index == 2:
+            break
         example, label = datum
         logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
 
