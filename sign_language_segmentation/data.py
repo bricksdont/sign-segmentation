@@ -284,7 +284,7 @@ class DataLoader:
         :return:
         """
         def length_is_acceptable(example: dict) -> bool:
-            return int(example["frames"].numpy()) <= self.max_num_frames
+            return example["frames"] <= self.max_num_frames
 
         num_examples_before = get_dataset_size(dataset)
 
