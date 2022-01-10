@@ -101,20 +101,26 @@ def get_dataset_size(dataset: tf.data.Dataset) -> int:
     return int(dataset.reduce(0, lambda x, y: x+1).numpy())
 
 
-def log_dataset_statistics(dataset: tf.data.Dataset, name: str = "data") -> None:
+def log_dataset_statistics(dataset: tf.data.Dataset,
+                           name: str = "data",
+                           infinite: bool = False) -> None:
     """
-    Log size of dataset. Does not work with infinite datasets (dataset.repeat()).
+    Log size of dataset.
 
     :param dataset:
     :param name:
+    :param infinite:
     :return:
     """
     logging.debug("Statistics of dataset: '%s'", name)
 
-    num_examples = get_dataset_size(dataset)
+    if not infinite:
+        num_examples = get_dataset_size(dataset)
 
-    logging.debug("num_examples:")
-    logging.debug(num_examples)
+        logging.debug("num_examples:")
+        logging.debug(num_examples)
+    else:
+        logging.debug("Will not compute number of examples in dataset since it is infinite.")
 
     for index, datum in enumerate(dataset.as_numpy_iterator()):
 

@@ -59,9 +59,9 @@ def main(args: argparse.Namespace):
 
     train, dev, test = data_loader.get_datasets()
 
-    log_dataset_statistics(train, "train")
-    log_dataset_statistics(dev, "dev")
-    log_dataset_statistics(test, "test")
+    log_dataset_statistics(dataset=train, name="train", infinite=True)
+    log_dataset_statistics(dataset=dev, name="dev")
+    log_dataset_statistics(dataset=test, name="test")
 
     # Initialize Model
     logging.debug("##############")
