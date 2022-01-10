@@ -283,12 +283,15 @@ class DataLoader:
         :param dataset_name:
         :return:
         """
+        def length_is_acceptable(example: dict) -> bool:
+            return int(example["frames"].numpy()) <= self.max_num_frames
+
         num_examples_before = get_dataset_size(dataset)
 
         if self.max_num_frames > -1:
             logging.debug("Filtering dataset '%s'...", dataset_name)
             if self.max_num_frames_strategy == "remove":
-                dataset = dataset.filter(lambda x_y_tuple: x_y_tuple[0].shape[-2] <= self.max_num_frames)
+                dataset = dataset.filter(length_is_acceptable)
             else:
                 raise NotImplementedError
 
@@ -308,11 +311,9 @@ class DataLoader:
         """
         logging.debug("Preparing training pipeline...")
 
-        dataset = dataset.map(self.load_datum)
+        dataset = dataset.map(self.load_datum).cache()
 
         dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
-
-        dataset = dataset.cache()
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
                               num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -336,10 +337,10 @@ class DataLoader:
 
         dataset = dataset.map(self.load_datum)
 
+        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
+
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
         dataset = self.batch_dataset(dataset, self.test_batch_size)
-
-        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
 
         return dataset.cache()
 
