@@ -54,6 +54,7 @@ def main(args: argparse.Namespace):
                              frame_dropout=args.frame_dropout,
                              frame_dropout_std=args.frame_dropout_std,
                              scale_pose=args.scale_pose,
+                             min_num_frames=args.min_num_frames,
                              max_num_frames=args.max_num_frames,
                              max_num_frames_strategy=args.max_num_frames_strategy)
 

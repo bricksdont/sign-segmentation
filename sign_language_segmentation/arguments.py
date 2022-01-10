@@ -32,8 +32,11 @@ def parse_args():
     parser.add_argument('--input_size', type=int, default=137, help='Number of pose points')
     parser.add_argument('--desired_fps', type=int, default=50, help='Convert to this framerate')
     parser.add_argument('--max_num_frames', type=int, default=-1, help='Remove, truncate or split examples with more '
-                                                                       'frames (behaviour depends '
+                                                                       'frames (exact behaviour depends '
                                                                        'on --max_num_frames_strategy and --desired_fps)')
+    parser.add_argument('--min_num_frames', type=int, default=0, help='Remove examples with fewer '
+                                                                       'frames (exact behaviour depends '
+                                                                       'on --desired_fps)')
     parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='Type of pose features',
                         choices=["remove", "split", "truncate"])
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',

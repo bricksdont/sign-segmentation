@@ -106,6 +106,7 @@ def log_raw_datum_examples(dataset: tf.data.Dataset,
     """
 
     :param dataset:
+    :param max_index:
     :return:
     """
     template_string = "\tRaw datum %d: fps=%s, frames=%s, tgt.shape=%s, pose_data_tensor.shape=%s, " \
@@ -163,8 +164,8 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
 class DataLoader:
 
     def __init__(self, data_dir: str, batch_size: int, test_batch_size: int, normalize_pose: bool,
-                 frame_dropout: bool, frame_dropout_std: float, scale_pose: bool, max_num_frames: int,
-                 max_num_frames_strategy: str):
+                 frame_dropout: bool, frame_dropout_std: float, scale_pose: bool, min_num_frames: int,
+                 max_num_frames: int, max_num_frames_strategy: str):
         """
 
         :param data_dir:
@@ -174,6 +175,7 @@ class DataLoader:
         :param frame_dropout:
         :param frame_dropout_std:
         :param scale_pose:
+        :param min_num_frames:
         :param max_num_frames:
         :param max_num_frames_strategy:
         """
@@ -185,10 +187,15 @@ class DataLoader:
         self.frame_dropout = frame_dropout
         self.frame_dropout_std = frame_dropout_std
         self.scale_pose = scale_pose
+        self.min_num_frames = min_num_frames
         self.max_num_frames = max_num_frames
         self.max_num_frames_strategy = max_num_frames_strategy
 
         self.minimum_fps = tf.constant(1, dtype=tf.float32)
+
+        if self.max_num_frames == -1:
+            # set to ridiculously high value that would not run on current hardware
+            self.max_num_frames = 10000000
 
     def load_datum(self, tfrecord_dict: dict) -> dict:
         """
@@ -290,9 +297,9 @@ class DataLoader:
 
         return dataset.map(self.prepare_io)
 
-    def maybe_apply_max_num_frames_strategy(self,
-                                            dataset: tf.data.Dataset,
-                                            dataset_name: str) -> tf.data.Dataset:
+    def maybe_apply_length_constraints(self,
+                                       dataset: tf.data.Dataset,
+                                       dataset_name: str) -> tf.data.Dataset:
         """
         If a maximum number of frames is defined, applies a specific strategy (removing, splitting
         or truncating) to examples that have too many frames.
@@ -302,21 +309,21 @@ class DataLoader:
         :return:
         """
         def length_is_acceptable(example: dict) -> bool:
-            return example["frames"] <= self.max_num_frames
+            return self.max_num_frames >= example["frames"] >= self.min_num_frames
 
         num_examples_before = get_dataset_size(dataset)
 
-        if self.max_num_frames > -1:
-            logging.debug("Filtering dataset '%s'...", dataset_name)
-            if self.max_num_frames_strategy == "remove":
-                dataset = dataset.filter(length_is_acceptable)
-            else:
-                raise NotImplementedError
+        logging.debug("Filtering dataset '%s'...", dataset_name)
 
-            num_examples_after = get_dataset_size(dataset)
+        if self.max_num_frames_strategy == "remove":
+            dataset = dataset.filter(length_is_acceptable)
+        else:
+            raise NotImplementedError
 
-            logging.debug("Number of examples before/after applying max_num_frames strategy: %d/%d",
-                          num_examples_before, num_examples_after)
+        num_examples_after = get_dataset_size(dataset)
+
+        logging.debug("Number of examples before/after applying length constraints: %d/%d",
+                      num_examples_before, num_examples_after)
 
         return dataset
 
@@ -334,9 +341,9 @@ class DataLoader:
         logging.debug("AFTER load_datum")
         log_raw_datum_examples(dataset, max_index=100)
 
-        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name="train")
+        dataset = self.maybe_apply_length_constraints(dataset, dataset_name="train")
 
-        logging.debug("AFTER maybe_apply_max_num_frames_strategy")
+        logging.debug("AFTER maybe_apply_length_constraints")
         log_raw_datum_examples(dataset, max_index=100)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
@@ -365,7 +372,7 @@ class DataLoader:
 
         log_raw_datum_examples(dataset)
 
-        dataset = self.maybe_apply_max_num_frames_strategy(dataset, dataset_name=dataset_name)
+        dataset = self.maybe_apply_length_constraints(dataset, dataset_name=dataset_name)
 
         log_raw_datum_examples(dataset)
 
