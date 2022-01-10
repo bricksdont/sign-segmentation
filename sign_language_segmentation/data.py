@@ -288,7 +288,7 @@ class DataLoader:
         if self.max_num_frames > -1:
             logging.debug("Filtering dataset '%s'...", dataset_name)
             if self.max_num_frames_strategy == "remove":
-                dataset = dataset.filter(lambda x, y: x.shape[-2] <= self.max_num_frames)
+                dataset = dataset.filter(lambda x_y_tuple: x_y_tuple[0].shape[-2] <= self.max_num_frames)
             else:
                 raise NotImplementedError
 
