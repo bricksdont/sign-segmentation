@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 
 
 def parse_args():
-
     parser = ArgumentParser()
 
     # Training Arguments
@@ -16,8 +15,9 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
     parser.add_argument('--steps_per_epoch', type=int, default=32, help='Number of batches per epoch')
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping.")
-    parser.add_argument("--min_delta", type=float, default=0.0, help="Minimum delta for improvement with early stopping."
-                                                                     "Default: 0.")
+    parser.add_argument("--min_delta", type=float, default=0.0,
+                        help="Minimum delta for improvement with early stopping."
+                             "Default: 0.")
 
     # sizes and number of layers
     parser.add_argument('--input_dropout', type=float, default=0.3, help='Input dropout rate')
@@ -35,8 +35,8 @@ def parse_args():
                                                                        'frames (exact behaviour depends '
                                                                        'on --max_num_frames_strategy and --desired_fps)')
     parser.add_argument('--min_num_frames', type=int, default=0, help='Remove examples with fewer '
-                                                                       'frames (exact behaviour depends '
-                                                                       'on --desired_fps)')
+                                                                      'frames (exact behaviour depends '
+                                                                      'on --desired_fps)')
     parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='Type of pose features',
                         choices=["remove", "split", "truncate"])
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',

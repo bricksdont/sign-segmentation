@@ -76,7 +76,10 @@ class RecordCReator:
         if self.max_num_examples == -1:
             self.max_num_examples = np.inf
 
-        self.config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose=self.pose_type)
+        self.config = SignDatasetConfig(name="annotations-pose",
+                                        version="1.0.0",
+                                        include_video=False,
+                                        include_pose=self.pose_type)
         self.dgs_corpus = None
         self.tfrecord_path = None
 
@@ -189,12 +192,12 @@ class RecordCReator:
 
                     fps, pose_data, pose_conf, bio = data_for_single_person
 
-                    pose_data = tf.io.serialize_tensor(pose_data).numpy()
-                    pose_conf = tf.io.serialize_tensor(pose_conf).numpy()
-
                     if num_examples == 1:
                         logging.debug("fps=%s, pose_data.shape=%s, pose_conf.shape=%s, bio.shape=%s",
                                       fps, pose_data.shape, pose_conf.shape, bio.shape)
+
+                    pose_data = tf.io.serialize_tensor(pose_data).numpy()
+                    pose_conf = tf.io.serialize_tensor(pose_conf).numpy()
 
                     tags = bio.tobytes()
 
