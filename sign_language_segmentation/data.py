@@ -317,8 +317,10 @@ class DataLoader:
 
         if self.max_num_frames_strategy == "remove":
             dataset = dataset.filter(length_is_acceptable)
+        elif self.max_num_frames_strategy == "split":
+            #
         else:
-            raise NotImplementedError
+            raise NotImplementedError("Length constraint strategy '%s' not implemented." % self.max_num_frames_strategy)
 
         num_examples_after = get_dataset_size(dataset)
 

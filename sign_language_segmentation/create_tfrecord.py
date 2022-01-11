@@ -189,13 +189,14 @@ class RecordCReator:
 
                     fps, pose_data, pose_conf, bio = data_for_single_person
 
-                    tags = bio.tobytes()
                     pose_data = tf.io.serialize_tensor(pose_data).numpy()
                     pose_conf = tf.io.serialize_tensor(pose_conf).numpy()
 
                     if num_examples == 1:
                         logging.debug("fps=%s, pose_data.shape=%s, pose_conf.shape=%s, bio.shape=%s",
                                       fps, pose_data.shape, pose_conf.shape, bio.shape)
+
+                    tags = bio.tobytes()
 
                     features = {
                         'fps': tf.train.Feature(int64_list=tf.train.Int64List(value=[fps])),
