@@ -308,9 +308,8 @@ class DataLoader:
         :param dataset_name:
         :return:
         """
-        @tf.function
         def length_is_acceptable(example: dict) -> bool:
-            return self.max_num_frames >= example["frames"] >= self.min_num_frames
+            return self.max_num_frames >= example["frames"] and example["frames"] >= self.min_num_frames
 
         num_examples_before = get_dataset_size(dataset)
 
@@ -340,12 +339,12 @@ class DataLoader:
         dataset = dataset.map(self.load_datum).cache()
 
         logging.debug("AFTER load_datum")
-        log_raw_datum_examples(dataset, max_index=100)
+        log_raw_datum_examples(dataset, max_index=2)
 
         dataset = self.maybe_apply_length_constraints(dataset, dataset_name="train")
 
         logging.debug("AFTER maybe_apply_length_constraints")
-        log_raw_datum_examples(dataset, max_index=100)
+        log_raw_datum_examples(dataset, max_index=2)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=True),
                               num_parallel_calls=tf.data.experimental.AUTOTUNE)
@@ -371,11 +370,13 @@ class DataLoader:
 
         dataset = dataset.map(self.load_datum)
 
-        log_raw_datum_examples(dataset)
+        logging.debug("AFTER load_datum")
+        log_raw_datum_examples(dataset, max_index=2)
 
         dataset = self.maybe_apply_length_constraints(dataset, dataset_name=dataset_name)
 
-        log_raw_datum_examples(dataset)
+        logging.debug("AFTER maybe_apply_length_constraints")
+        log_raw_datum_examples(dataset, max_index=2)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
         dataset = self.batch_dataset(dataset, self.test_batch_size)

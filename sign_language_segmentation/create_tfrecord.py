@@ -25,14 +25,17 @@ def parse_args_tfrecord():
     # directories and checkpoints
     parser.add_argument('--data_dir', type=str, required=False, metavar='PATH',
                         help="Tensorflow dataset directory. Default: $HOME.")
-    parser.add_argument('--download_max_retries', type=int, default=1, help='Retry tfds download N times.')
-    parser.add_argument('--max_num_examples', type=int, default=1, help='Max number of examples to write as tfrecords.')
+    parser.add_argument('--download_max_retries', type=int, default=1, help='Retry tfds download N times. (default: 1)')
+    parser.add_argument('--max_num_examples', type=int, default=-1, help='Max number of examples to write as tfrecords. '
+                                                                         '(default: -1 = all examples)')
     parser.add_argument('--label_type', type=str, default="sentence", help='Whether BIO labels apply to'
-                                                                           'individual glosses or entire sentences',
+                                                                           'individual glosses or entire sentences. '
+                                                                           '(default: "sentence")',
                         choices=["gloss", "sentence"])
-    parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
+    parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features (default: "openpose")',
                         choices=["openpose", "holistic"])
-    parser.add_argument('--skip_if_num_frames_zero', action='store_true', default=False, help='Skip examples if they have zero frames')
+    parser.add_argument('--skip_if_num_frames_zero', action='store_true', default=False,
+                        help='Skip examples if they have zero frames (default: False)')
 
     args = parser.parse_args()
 
@@ -53,6 +56,15 @@ class RecordCReator:
 
     def __init__(self, pose_type: str, data_dir: str, download_max_retries: int,
                  skip_if_num_frames_zero: bool, label_type: str, max_num_examples: int):
+        """
+
+        :param pose_type:
+        :param data_dir:
+        :param download_max_retries:
+        :param skip_if_num_frames_zero:
+        :param label_type:
+        :param max_num_examples:
+        """
 
         self.pose_type = pose_type
         self.data_dir = data_dir
@@ -60,6 +72,9 @@ class RecordCReator:
         self.skip_if_num_frames_zero = skip_if_num_frames_zero
         self.label_type = label_type
         self.max_num_examples = max_num_examples
+
+        if self.max_num_examples == -1:
+            self.max_num_examples = np.inf
 
         self.config = SignDatasetConfig(name="annotations-pose", version="1.0.0", include_video=False, include_pose=self.pose_type)
         self.dgs_corpus = None
