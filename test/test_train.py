@@ -2,7 +2,6 @@
 
 import os
 import argparse
-import logging
 
 import tensorflow as tf
 import numpy as np
