@@ -8,3 +8,4 @@ tqdm
 absl-py
 numpy
 pytest
+pytest-cov

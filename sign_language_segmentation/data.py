@@ -269,6 +269,7 @@ class DataLoader:
             # set to ridiculously high value that would not run on current hardware
             self.max_num_frames = 100000000
 
+    # noinspection PyMethodMayBeStatic
     def load_datum(self, tfrecord_dict: dict) -> dict:
         """
         Convert tfrecord dictionary to tensors.
@@ -346,7 +347,7 @@ class DataLoader:
                                        dataset: tf.data.Dataset,
                                        dataset_name: str) -> tf.data.Dataset:
         """
-        If a maximum number of frames is defined, applies a specific strategy (removing, splitting
+        If a maximum number of frames is defined, applies a specific strategy (removing, slicing
         or truncating) to examples that have too many frames.
 
         :param dataset:
@@ -440,7 +441,12 @@ class DataLoader:
         return dataset.cache()
 
     def split_dataset(self, dataset: tf.data.Dataset) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset]:
-        """Split dataset to train, dev, and test."""
+        """
+        Split dataset to train, dev, and test.
+
+        :param dataset:
+        :return:
+        """
 
         def is_dev(x, _) -> bool:
             # Every 7th item
