@@ -7,3 +7,4 @@ pose-format>=0.0.6
 tqdm
 absl-py
 numpy
+pytest

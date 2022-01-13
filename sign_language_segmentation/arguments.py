@@ -37,8 +37,9 @@ def parse_args():
     parser.add_argument('--min_num_frames', type=int, default=0, help='Remove examples with fewer '
                                                                       'frames (exact behaviour depends '
                                                                       'on --desired_fps)')
-    parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='Type of pose features',
-                        choices=["remove", "split", "truncate"])
+    parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='What to do with examples that '
+                                                                                      'have too many frames',
+                        choices=["remove", "truncate", "slice"])
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
                         choices=["openpose", "holistic"])
     parser.add_argument('--normalize_pose', action='store_true', default=False, help='Normalize poses by'

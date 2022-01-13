@@ -8,9 +8,9 @@ import logging
 
 import tensorflow as tf
 
-from arguments import parse_args
-from data import DataLoader, log_dataset_statistics
-from model import ModelBuilder
+from .arguments import parse_args
+from .data import DataLoader, log_dataset_statistics
+from .model import ModelBuilder
 
 from typing import Optional
 

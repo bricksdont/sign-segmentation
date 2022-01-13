@@ -92,13 +92,55 @@ def optical_flow(src: tf.Tensor, fps: tf.Tensor) -> tf.Tensor:
     return src
 
 
+def random_slice_example(example: dict, max_num_frames: int) -> dict:
+    """
+
+    :param example:
+    :param max_num_frames:
+    :return:
+    """
+    length = example["frames"]
+
+    if tf.less_equal(example["frames"], max_num_frames):
+        return example
+
+    tensor_keys = ["tgt", "pose_data_tensor", "pose_data_mask", "pose_confidence"]
+
+    max_index = length - max_num_frames
+    random_index = tf.random.uniform(shape=(), minval=0, maxval=max_index + 1, dtype=tf.int32)
+
+    for key in tensor_keys:
+        example[key] = example[key][random_index:random_index + max_num_frames]
+
+    example["frames"] = tf.constant(max_num_frames, dtype=tf.int32)
+
+    return example
+
+
+def truncate_example(example: dict, max_num_frames: int) -> dict:
+    """
+
+    :param example:
+    :param max_num_frames:
+    :return:
+    """
+    tensor_keys = ["tgt", "pose_data_tensor", "pose_data_mask", "pose_confidence"]
+
+    for key in tensor_keys:
+        example[key] = example[key][:max_num_frames]
+
+    example["frames"] = tf.cast(tf.size(example["tgt"]), dtype=tf.int32)
+
+    return example
+
+
 def get_dataset_size(dataset: tf.data.Dataset) -> int:
     """
 
     :param dataset:
     :return:
     """
-    return int(dataset.reduce(0, lambda x, y: x+1).numpy())
+    return int(dataset.reduce(0, lambda x, y: x + 1).numpy())
 
 
 def log_raw_datum_examples(dataset: tf.data.Dataset,
@@ -161,6 +203,36 @@ def log_dataset_statistics(dataset: tf.data.Dataset,
     log_datum_examples(dataset)
 
 
+def prepare_io(datum: dict):
+    """
+    Convert dictionary into input-output tuple for Keras.
+
+    :param datum:
+    :return:
+    """
+    src = datum["src"]
+    tgt = datum["tgt"]
+
+    return src, tgt
+
+
+def batch_dataset(dataset: tf.data.Dataset, batch_size: int) -> tf.data.Dataset:
+    """
+    Batch and pad a dataset.
+
+    :param dataset:
+    :param batch_size:
+    :return:
+    """
+    dataset = dataset.padded_batch(
+        batch_size, padded_shapes={
+            "src": [None, None],
+            "tgt": [None]
+        })
+
+    return dataset.map(prepare_io)
+
+
 class DataLoader:
 
     def __init__(self, data_dir: str, batch_size: int, test_batch_size: int, normalize_pose: bool,
@@ -191,11 +263,11 @@ class DataLoader:
         self.max_num_frames = max_num_frames
         self.max_num_frames_strategy = max_num_frames_strategy
 
-        self.minimum_fps = tf.constant(1, dtype=tf.float32)
+        self.minimum_fps = tf.constant(1, dtype=tf.int32)
 
         if self.max_num_frames == -1:
             # set to ridiculously high value that would not run on current hardware
-            self.max_num_frames = 10000000
+            self.max_num_frames = 100000000
 
     def load_datum(self, tfrecord_dict: dict) -> dict:
         """
@@ -208,7 +280,8 @@ class DataLoader:
         tgt = tf.io.decode_raw(tfrecord_dict["tags"], out_type=tf.int8)
 
         fps = pose_body.fps
-        frames = tf.cast(tf.size(tgt), dtype=fps.dtype)
+        fps = tf.cast(fps, tf.int32)
+        frames = tf.cast(tf.size(tgt), dtype=tf.int32)
 
         # TODO: Get only relevant input components
         # pose = pose.get_components(FLAGS.input_components)
@@ -269,34 +342,6 @@ class DataLoader:
 
         return {"src": src, "tgt": tgt}
 
-    def prepare_io(self, datum: dict):
-        """
-        Convert dictionary into input-output tuple for Keras.
-
-        :param datum:
-        :return:
-        """
-        src = datum["src"]
-        tgt = datum["tgt"]
-
-        return src, tgt
-
-    def batch_dataset(self, dataset: tf.data.Dataset, batch_size: int) -> tf.data.Dataset:
-        """
-        Batch and pad a dataset.
-
-        :param dataset:
-        :param batch_size:
-        :return:
-        """
-        dataset = dataset.padded_batch(
-            batch_size, padded_shapes={
-                "src": [None, None],
-                "tgt": [None]
-            })
-
-        return dataset.map(self.prepare_io)
-
     def maybe_apply_length_constraints(self,
                                        dataset: tf.data.Dataset,
                                        dataset_name: str) -> tf.data.Dataset:
@@ -308,17 +353,26 @@ class DataLoader:
         :param dataset_name:
         :return:
         """
-        def length_is_acceptable(example: dict) -> bool:
-            return self.max_num_frames >= example["frames"] and example["frames"] >= self.min_num_frames
+
+        def min_length_is_acceptable(example: dict) -> bool:
+            return example["frames"] >= self.min_num_frames
+
+        def max_length_is_acceptable(example: dict) -> bool:
+            return self.max_num_frames >= example["frames"]
 
         num_examples_before = get_dataset_size(dataset)
 
         logging.debug("Filtering dataset '%s'...", dataset_name)
 
+        # always filter out examples that are too short
+        dataset = dataset.filter(min_length_is_acceptable)
+
         if self.max_num_frames_strategy == "remove":
-            dataset = dataset.filter(length_is_acceptable)
-        elif self.max_num_frames_strategy == "split":
-            raise NotImplementedError("Length constraint strategy '%s' not implemented." % self.max_num_frames_strategy)
+            dataset = dataset.filter(max_length_is_acceptable)
+        elif self.max_num_frames_strategy == "truncate":
+            dataset = dataset.map(lambda example: truncate_example(example=example, max_num_frames=self.max_num_frames))
+        elif self.max_num_frames_strategy == "slice":
+            dataset = dataset.map(lambda example: random_slice_example(example=example, max_num_frames=self.max_num_frames))
         else:
             raise NotImplementedError("Length constraint strategy '%s' not implemented." % self.max_num_frames_strategy)
 
@@ -353,7 +407,7 @@ class DataLoader:
 
         dataset = dataset.repeat().shuffle(self.batch_size)
 
-        dataset = self.batch_dataset(dataset, self.batch_size)
+        dataset = batch_dataset(dataset, self.batch_size)
 
         dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
         return dataset
@@ -381,7 +435,7 @@ class DataLoader:
         log_raw_datum_examples(dataset, max_index=2)
 
         dataset = dataset.map(lambda d: self.process_datum(datum=d, is_train=False))
-        dataset = self.batch_dataset(dataset, self.test_batch_size)
+        dataset = batch_dataset(dataset, self.test_batch_size)
 
         return dataset.cache()
 
