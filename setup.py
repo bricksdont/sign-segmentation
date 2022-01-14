@@ -109,6 +109,11 @@ args = dict(
 
     entry_points=entry_points,
 
+    package_data={
+        # If any package contains *.poseheader files, include them:
+        "": ["*.poseheader"],
+    },
+
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3 :: Only',
