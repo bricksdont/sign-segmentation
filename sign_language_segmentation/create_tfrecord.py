@@ -104,7 +104,7 @@ class RecordCReator:
 
     def create_tfrecord_dataset_if_does_not_exist(self):
 
-        self.tfrecord_path = os.path.join(args.data_dir, "data.tfrecord")
+        self.tfrecord_path = os.path.join(self.data_dir, "data.tfrecord")
 
         if os.path.isfile(self.tfrecord_path):
             logging.debug("Tfrecord already exists: '%s'" % self.tfrecord_path)
@@ -220,7 +220,7 @@ class RecordCReator:
         logging.debug("Finished writing TFRecord data.")
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args_tfrecord()
 
     logging.basicConfig(level=logging.DEBUG)
@@ -235,3 +235,7 @@ if __name__ == '__main__':
 
     tfrecord_creator.load_tfds_data()
     tfrecord_creator.create_tfrecord_dataset_if_does_not_exist()
+
+
+if __name__ == '__main__':
+    main()

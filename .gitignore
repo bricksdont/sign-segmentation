@@ -2,3 +2,6 @@
 .idea
 __pycache__
 .coverage
+.eggs
+build/
+*.egg-info

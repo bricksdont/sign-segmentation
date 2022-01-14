@@ -28,11 +28,12 @@ def set_seed(seed: Optional[int] = None):
     """
     if seed is None:
         seed = random.randint(0, 1000)
+
     tf.random.set_seed(seed)
     random.seed(seed)
 
 
-def main(args: argparse.Namespace):
+def train(args: argparse.Namespace):
     """
     Keras training loop with early-stopping and model checkpoint.
 
@@ -102,10 +103,14 @@ def main(args: argparse.Namespace):
     best_model.evaluate(test)
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
 
     logging.basicConfig(level=logging.DEBUG)
     logging.debug(args)
 
-    main(args)
+    train(args)
+
+
+if __name__ == '__main__':
+    main()

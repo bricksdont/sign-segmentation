@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from tempfile import TemporaryDirectory
 from typing import Optional, Tuple
 
-from sign_language_segmentation.train import main
+from sign_language_segmentation.train import train
 
 
 def get_random_numpy_example(frames_min: Optional[int] = None,
@@ -177,7 +177,7 @@ def create_mock_namespace(data_dir: str, model_path: str) -> argparse.Namespace:
 
 class TestTraining(TestCase):
 
-    def test_train_main_function(self):
+    def test_train_function(self):
 
         with _create_tmp_working_directory() as working_dir:
 
@@ -186,4 +186,4 @@ class TestTraining(TestCase):
 
             args = create_mock_namespace(data_dir, model_path)
 
-            main(args)
+            train(args)

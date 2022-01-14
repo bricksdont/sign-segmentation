@@ -3,38 +3,29 @@
 This repository holds the code to performing `BIO` tagging for sign language segmentation.
 This is a pre-processing step for sign language transcription.
 
-As predicted segments are indicative of signing, this model can be used for Sign Language Detection, 
-however, detection is a simpler task (`IO` vs `BIO`), and you better use [sign-language-processing/detection-train](https://github.com/sign-language-processing/detection-train).
+## Setup
 
-## Models
-
-This repository includes pre-trained models for both [python](models/py/) and [javascript](models/js/), 
-and for both a realtime (unidirectional) model and an offline (bidirectional) model.
-
-## Usage
-
-You can use the included models to perform inference or fine-tuning.
- 
-To load a model in python, use
-`tensorflow.python.keras.models.load_model('models/py/model.h5')`.
-
-To load a model in the browser, use `tf.loadLayersModel('models/js/model.json')`
-from [tfjs](https://github.com/tensorflow/tfjs).
-
-You can use the [train.py](train.py) script to train the model from scratch
-using a `tfrecord` dataset file.
+Install with pip, preferably inside a Python 3 virtual environment:
 
 ```bash
-python -m train --device="/GPU:0"
+pip install git+https://github.com/bricksdont/sign-segmentation
 ```
 
-## Dataset
+This will install two entry points to the code, `sign-language-segmentation-train` and
+`sign-language-segmentation-create-tfrecord`.
 
-The provided models were trained on the
-[Public DGS Corpus](https://www.sign-lang.uni-hamburg.de/meinedgs/ling/start-name_en.html) 
-via the [sign-language-datasets](https://github.com/sign-language-processing/datasets) library.
 
-This is a German Sign Language corpus, and there is no evaluation of how it works for other signed languages.
+## Creating a tfrecord file
+
+```bash
+sign-language-segmentation-create-tfrecord -h
+```
+
+## Training a model
+
+```bash
+sign-language-segmentation-train -h
+```
 
 ## Citations
 
