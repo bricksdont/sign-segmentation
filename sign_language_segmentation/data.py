@@ -30,7 +30,7 @@ def get_openpose_header(header_path: Optional[str] = None):
     """
     if header_path is None:
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        header_path = os.path.join(dir_path, "../assets/openpose.poseheader")
+        header_path = os.path.join(dir_path, "../sign_language_segmentation_assets/openpose.poseheader")
 
     f = open(header_path, "rb")
     reader = BufferReader(f.read())

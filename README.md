@@ -27,6 +27,14 @@ sign-language-segmentation-create-tfrecord -h
 sign-language-segmentation-train -h
 ```
 
+## Running tests
+
+To run tests with coverage, execute
+
+```bash
+pytest
+```
+
 ## Citations
 
 ```bibtex
