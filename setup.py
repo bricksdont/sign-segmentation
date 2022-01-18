@@ -55,8 +55,8 @@ git_hash = "%s"
 
 requirements_map = {"git+https://github.com/sign-language-processing/datasets.git":
                         "sign-language-datasets @ git+https://github.com/sign-language-processing/datasets.git",
-                    "git+https://github.com/bricksdont/pose-format.git@fix_tf_tensor_reshape":
-                        "pose-format @ git+https://github.com/bricksdont/pose-format.git@fix_tf_tensor_reshape"}
+                    "git+https://github.com/bricksdont/pose-format.git@fix_frame_dropout":
+                        "pose-format @ git+https://github.com/bricksdont/pose-format.git@fix_frame_dropout"}
 
 
 def get_requirements(filename):
