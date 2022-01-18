@@ -31,7 +31,7 @@ class TestModel(TestCase):
         model_builder = ModelBuilder(input_dropout=0.0,
                                      encoder_bidirectional=True,
                                      hidden_size=16,
-                                     input_size=6,
+                                     num_keypoints=6,
                                      learning_rate=0.001,
                                      num_encoder_layers=1)
         model = model_builder.build_model()

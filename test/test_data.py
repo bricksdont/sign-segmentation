@@ -1,10 +1,14 @@
 #! /usr/bin/python3
 
+import os
+
 import numpy as np
 import tensorflow as tf
 
 from unittest import TestCase
 from typing import List, Optional
+
+from test.common import _create_tmp_working_directory
 
 from sign_language_segmentation.data import DataLoader, random_slice_example, truncate_example
 
@@ -31,14 +35,16 @@ def get_random_raw_example(frames_min: Optional[int] = None,
     else:
         assert frames_min is None and frames_max is None
 
+    # avoid random keypoints having a mean of zero
     # (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
-    tensor = tf.random.normal((num_frames, 1, num_keypoints, num_dimensions))
+    tensor = tf.random.normal(shape=(num_frames, 1, num_keypoints, num_dimensions), mean=1.0)
 
     # (Frames, People, Points) - eg (93, 1, 137)
     confidence = tf.random.uniform((num_frames, 1, num_keypoints), minval=0.0, maxval=1.0, dtype=tf.dtypes.float32)
 
     # (Frames, People, Points, Dims) - eg (93, 1, 137, 2)
     mask = tf.random.uniform((num_frames, 1, num_keypoints, num_dimensions), minval=0, maxval=2, dtype=tf.dtypes.int32)
+    mask = tf.cast(mask, tf.bool)
 
     # (Frames,) - eg (93,)
     tgt = tf.random.uniform((num_frames,), minval=0, maxval=2, dtype=tf.dtypes.int32)
@@ -103,7 +109,7 @@ def create_random_raw_dataset(num_examples: int,
 
 class TestDataLoader(TestCase):
 
-    def test_data_loader_create_instance(self):
+    def test_data_loader_instance_type_is_correct(self):
         data_loader = DataLoader(data_dir="/tmp",
                                  batch_size=3,
                                  test_batch_size=2,
@@ -113,10 +119,82 @@ class TestDataLoader(TestCase):
                                  scale_pose=False,
                                  min_num_frames=0,
                                  max_num_frames=-1,
-                                 max_num_frames_strategy="remove")
+                                 max_num_frames_strategy="remove",
+                                 num_keypoints=5)
 
         # dummy test
         self.assertIsInstance(data_loader, DataLoader, "Dataloader object does not have the correct type")
+
+    def test_data_loader_get_datasets_train_example_shape_is_correct(self):
+        with _create_tmp_working_directory(num_examples=10,
+                                           fps=7,
+                                           frames_min=1,
+                                           frames_max=6,
+                                           num_keypoints=5,
+                                           num_dimensions=2) as working_dir:
+            data_dir = os.path.join(working_dir, "data")
+
+            data_loader = DataLoader(data_dir=data_dir,
+                                     batch_size=3,
+                                     test_batch_size=2,
+                                     normalize_pose=False,
+                                     frame_dropout=False,
+                                     frame_dropout_std=0.0,
+                                     scale_pose=False,
+                                     min_num_frames=0,
+                                     max_num_frames=-1,
+                                     max_num_frames_strategy="remove",
+                                     num_keypoints=5)
+
+            train, _, _ = data_loader.get_datasets()
+
+            expected_batch_size = 3
+            expected_num_features = 10
+
+            for index, example_tuple in enumerate(train.as_numpy_iterator()):
+                if index == 2:
+                    break
+                example, label = example_tuple
+                actual_batch_size = example.shape[0]
+                actual_num_features = example.shape[2]
+                self.assertEqual(actual_batch_size, expected_batch_size)
+                self.assertEqual(actual_num_features, expected_num_features)
+
+    def test_data_loader_get_datasets_devtest_example_shape_is_correct(self):
+        with _create_tmp_working_directory(num_examples=10,
+                                           fps=7,
+                                           frames_min=1,
+                                           frames_max=6,
+                                           num_keypoints=5,
+                                           num_dimensions=2) as working_dir:
+            data_dir = os.path.join(working_dir, "data")
+
+            data_loader = DataLoader(data_dir=data_dir,
+                                     batch_size=3,
+                                     test_batch_size=1,
+                                     normalize_pose=False,
+                                     frame_dropout=False,
+                                     frame_dropout_std=0.0,
+                                     scale_pose=False,
+                                     min_num_frames=0,
+                                     max_num_frames=-1,
+                                     max_num_frames_strategy="remove",
+                                     num_keypoints=5)
+
+            _, dev, test = data_loader.get_datasets()
+
+            expected_batch_size = 1
+            expected_num_features = 10
+
+            for dataset in [dev, test]:
+                for index, example_tuple in enumerate(dataset.as_numpy_iterator()):
+                    if index == 2:
+                        break
+                    example, label = example_tuple
+                    actual_batch_size = example.shape[0]
+                    actual_num_features = example.shape[2]
+                    self.assertEqual(actual_batch_size, expected_batch_size)
+                    self.assertEqual(actual_num_features, expected_num_features)
 
     def test_data_loader_apply_length_constraints_random_slice_examples_dataset_size_correct(self):
         data_loader = DataLoader(data_dir="/tmp",
@@ -128,7 +206,8 @@ class TestDataLoader(TestCase):
                                  scale_pose=False,
                                  min_num_frames=0,
                                  max_num_frames=5,
-                                 max_num_frames_strategy="slice")
+                                 max_num_frames_strategy="slice",
+                                 num_keypoints=137)
         num_examples = 13
         num_frames_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
@@ -154,13 +233,15 @@ class TestDataLoader(TestCase):
                                  scale_pose=False,
                                  min_num_frames=0,
                                  max_num_frames=5,
-                                 max_num_frames_strategy="truncate")
+                                 max_num_frames_strategy="truncate",
+                                 num_keypoints=5)
         num_examples = 13
         num_frames_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
 
         # create dummy tf.data.Dataset
         dataset = create_random_raw_dataset(num_examples=num_examples,
-                                            num_frames_list=num_frames_list)
+                                            num_frames_list=num_frames_list,
+                                            num_keypoints=5)
 
         # apply length constraints
         filtered_dataset = data_loader.maybe_apply_length_constraints(dataset, dataset_name="dummy")

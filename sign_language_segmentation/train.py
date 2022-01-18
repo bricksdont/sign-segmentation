@@ -57,7 +57,8 @@ def train(args: argparse.Namespace):
                              scale_pose=args.scale_pose,
                              min_num_frames=args.min_num_frames,
                              max_num_frames=args.max_num_frames,
-                             max_num_frames_strategy=args.max_num_frames_strategy)
+                             max_num_frames_strategy=args.max_num_frames_strategy,
+                             num_keypoints=args.num_keypoints)
 
     train, dev, test = data_loader.get_datasets()
 
@@ -73,7 +74,7 @@ def train(args: argparse.Namespace):
     model_builder = ModelBuilder(input_dropout=args.input_dropout,
                                  encoder_bidirectional=args.encoder_bidirectional,
                                  hidden_size=args.hidden_size,
-                                 input_size=args.input_size,
+                                 num_keypoints=args.num_keypoints,
                                  learning_rate=args.learning_rate,
                                  num_encoder_layers=args.num_encoder_layers)
     model = model_builder.build_model()

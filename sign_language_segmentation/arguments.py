@@ -29,7 +29,7 @@ def parse_args():
     parser.add_argument('--data_dir', type=str, default="data", metavar='PATH',
                         help="Where to look for tfrecord dataset.")
     parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
-    parser.add_argument('--input_size', type=int, default=137, help='Number of pose points')
+    parser.add_argument('--num_keypoints', type=int, default=137, help='Number of pose points')
     parser.add_argument('--desired_fps', type=int, default=50, help='Convert to this framerate')
     parser.add_argument('--max_num_frames', type=int, default=-1, help='Remove, truncate or split examples with more '
                                                                        'frames (exact behaviour depends '

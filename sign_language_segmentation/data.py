@@ -237,7 +237,7 @@ class DataLoader:
 
     def __init__(self, data_dir: str, batch_size: int, test_batch_size: int, normalize_pose: bool,
                  frame_dropout: bool, frame_dropout_std: float, scale_pose: bool, min_num_frames: int,
-                 max_num_frames: int, max_num_frames_strategy: str):
+                 max_num_frames: int, max_num_frames_strategy: str, num_keypoints: int):
         """
 
         :param data_dir:
@@ -250,6 +250,7 @@ class DataLoader:
         :param min_num_frames:
         :param max_num_frames:
         :param max_num_frames_strategy:
+        :param num_keypoints:
         """
 
         self.data_dir = data_dir
@@ -262,6 +263,7 @@ class DataLoader:
         self.min_num_frames = min_num_frames
         self.max_num_frames = max_num_frames
         self.max_num_frames_strategy = max_num_frames_strategy
+        self.num_keypoints = num_keypoints
 
         self.minimum_fps = tf.constant(1, dtype=tf.int32)
 
@@ -312,7 +314,7 @@ class DataLoader:
         tgt = datum["tgt"]
 
         if self.frame_dropout and is_train:
-            pose, selected_indexes = pose.frame_dropout(self.frame_dropout_std)
+            pose, selected_indexes = pose.frame_dropout_normal(dropout_std=self.frame_dropout_std)
 
             # selected_indexes are the ones that are _not_ dropped
             # sub-select frame labels that are not dropped
@@ -336,9 +338,9 @@ class DataLoader:
         src = src.squeeze(axis=1)
 
         # (Frames, Points * Dims)
-        src = src.reshape(shape=(-1, 137 * 2))
+        src = src.reshape(shape=(-1, self.num_keypoints * 2))
 
-        # remove Nan values
+        # remove Nan values, convert to regular, non-masked tf.Tensor
         src = src.fix_nan().zero_filled()
 
         return {"src": src, "tgt": tgt}

@@ -8,21 +8,21 @@ import tensorflow as tf
 class ModelBuilder:
 
     def __init__(self, input_dropout: float, num_encoder_layers: int, hidden_size: int,
-                 encoder_bidirectional: bool, input_size: int, learning_rate: float) -> None:
+                 encoder_bidirectional: bool, num_keypoints: int, learning_rate: float) -> None:
         """
 
         :param input_dropout:
         :param num_encoder_layers:
         :param hidden_size:
         :param encoder_bidirectional:
-        :param input_size:
+        :param num_keypoints:
         :param learning_rate:
         """
         self.input_dropout = input_dropout
         self.num_encoder_layers = num_encoder_layers
         self.hidden_size = hidden_size
         self.encoder_bidirectional = encoder_bidirectional
-        self.input_size = input_size
+        self.num_keypoints = num_keypoints
         self.learning_rate = learning_rate
 
     def get_model(self) -> tf.keras.Sequential:
@@ -56,7 +56,7 @@ class ModelBuilder:
         :return:
         """
         model = self.get_model()
-        model.build(input_shape=(None, None, self.input_size * 2))
+        model.build(input_shape=(None, None, self.num_keypoints * 2))
         model.compile(
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),

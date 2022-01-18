@@ -1,7 +1,7 @@
 # Sign Language Segmentation Training
 
 This repository holds the code to performing `BIO` tagging for sign language segmentation.
-This is a pre-processing step for sign language transcription.
+This is a pre-processing step for tasks such as sign language transcription or sign language translation.
 
 ## Setup
 
