@@ -154,7 +154,7 @@ def log_raw_datum_examples(dataset: tf.data.Dataset,
     template_string = "\tRaw datum %d: fps=%s, frames=%s, tgt.shape=%s, pose_data_tensor.shape=%s, " \
                       "pose_data_mask.shape=%s, pose_confidence.shape=%s"
 
-    for index, datum in enumerate(dataset.as_numpy_iterator()):
+    for index, datum in dataset.enumerate():
         if index == max_index:
             break
         logging.debug(template_string,
@@ -173,7 +173,7 @@ def log_datum_examples(dataset: tf.data.Dataset):
     :param dataset:
     :return:
     """
-    for index, datum in enumerate(dataset.as_numpy_iterator()):
+    for index, datum in dataset.enumerate():
         if index == 2:
             break
         example, label = datum

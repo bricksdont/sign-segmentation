@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument('--test_batch_size', type=int, default=1, help='batch size for evaluation')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
-    parser.add_argument('--steps_per_epoch', type=int, default=None, help='Number of batches per epoch')
+    parser.add_argument('--steps_per_epoch', type=int, default=32, help='Number of batches per epoch')
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping.")
     parser.add_argument("--min_delta", type=float, default=0.0,
                         help="Minimum delta for improvement with early stopping."

@@ -12,7 +12,7 @@ from .arguments import parse_args
 from .data import DataLoader, log_dataset_statistics
 from .model import ModelBuilder
 
-from typing import Optional
+from typing import Optional, Tuple
 
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.callbacks import ModelCheckpoint
@@ -33,7 +33,7 @@ def set_seed(seed: Optional[int] = None):
     random.seed(seed)
 
 
-def train(args: argparse.Namespace) -> tf.keras.callbacks.History:
+def train(args: argparse.Namespace) -> Tuple[tf.keras.callbacks.History, dict]:
     """
     Keras training loop with early-stopping and model checkpoint.
 
@@ -105,9 +105,9 @@ def train(args: argparse.Namespace) -> tf.keras.callbacks.History:
     logging.debug('Start testing')
     logging.debug("#############")
 
-    best_model.evaluate(test)
+    evaluation_results = best_model.evaluate(test, return_dict=True)
 
-    return history
+    return history, evaluation_results
 
 
 def main():
