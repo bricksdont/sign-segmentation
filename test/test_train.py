@@ -34,7 +34,11 @@ def create_mock_namespace(data_dir: str,
                       encoder_bidirectional=True,
                       hidden_size=8,
                       data_dir=data_dir,
+                      frame_dropout_type="normal",
+                      frame_dropout_mean=0.3,
                       frame_dropout_std=0.3,
+                      frame_dropout_min=0.1,
+                      frame_dropout_max=0.5,
                       num_keypoints=num_keypoints,
                       desired_fps=50,
                       max_num_frames=-1,
@@ -118,5 +122,22 @@ class TestTraining(TestCase):
             model_path = os.path.join(working_dir, "models", "test_model")
 
             args = create_mock_namespace(data_dir, model_path, num_keypoints=5, frame_dropout=True)
+
+            train(args)
+
+    def test_train_function_combine_frame_dropout_normalize_scale(self):
+
+        with _create_tmp_working_directory(num_examples=10,
+                                           fps=7,
+                                           frames_min=1,
+                                           frames_max=6,
+                                           num_keypoints=137,
+                                           num_dimensions=2) as working_dir:
+
+            data_dir = os.path.join(working_dir, "data")
+            model_path = os.path.join(working_dir, "models", "test_model")
+
+            args = create_mock_namespace(data_dir, model_path, num_keypoints=137, frame_dropout=True,
+                                         scale_pose=True, normalize_pose=True)
 
             train(args)

@@ -35,7 +35,7 @@ def _get_random_numpy_example(frames_min: Optional[int] = None,
     pose_data = np.random.normal(size=(num_frames, 1, num_keypoints, num_dimensions), loc=1.0).astype(np.float32)
 
     # (Frames, People, Points) - eg (93, 1, 137)
-    pose_confidence = np.random.random_sample((num_frames, 1, num_keypoints)).astype(np.float32)
+    pose_confidence = np.random.uniform(size=(num_frames, 1, num_keypoints), low=0.0, high=1.0).astype(np.float32)
 
     # (Frames,) - eg (93,)
     bio = np.random.randint(0, 3, size=(num_frames,)).astype(np.int8)

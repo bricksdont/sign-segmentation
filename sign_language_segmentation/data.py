@@ -177,7 +177,7 @@ def log_datum_examples(dataset: tf.data.Dataset):
         if index == 2:
             break
         example, label = datum
-        logging.debug("\tBatch %d: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
+        logging.debug("\tBatch %d shapes: example.shape=%s, label.shape=%s", index, example.shape, label.shape)
 
 
 def log_dataset_statistics(dataset: tf.data.Dataset,
@@ -236,7 +236,8 @@ def batch_dataset(dataset: tf.data.Dataset, batch_size: int) -> tf.data.Dataset:
 class DataLoader:
 
     def __init__(self, data_dir: str, batch_size: int, test_batch_size: int, normalize_pose: bool,
-                 frame_dropout: bool, frame_dropout_std: float, scale_pose: bool, min_num_frames: int,
+                 frame_dropout: bool, frame_dropout_type: str, frame_dropout_mean: float, frame_dropout_std: float,
+                 frame_dropout_min: float, frame_dropout_max: float, scale_pose: bool, min_num_frames: int,
                  max_num_frames: int, max_num_frames_strategy: str, num_keypoints: int):
         """
 
@@ -245,7 +246,11 @@ class DataLoader:
         :param test_batch_size:
         :param normalize_pose:
         :param frame_dropout:
+        :param frame_dropout_type:
+        :param frame_dropout_mean:
         :param frame_dropout_std:
+        :param frame_dropout_min:
+        :param frame_dropout_max:
         :param scale_pose:
         :param min_num_frames:
         :param max_num_frames:
@@ -258,7 +263,11 @@ class DataLoader:
         self.test_batch_size = test_batch_size
         self.normalize_pose = normalize_pose
         self.frame_dropout = frame_dropout
+        self.frame_dropout_type = frame_dropout_type
+        self.frame_dropout_mean = frame_dropout_mean
         self.frame_dropout_std = frame_dropout_std
+        self.frame_dropout_min = frame_dropout_min
+        self.frame_dropout_max = frame_dropout_max
         self.scale_pose = scale_pose
         self.min_num_frames = min_num_frames
         self.max_num_frames = max_num_frames
@@ -314,7 +323,12 @@ class DataLoader:
         tgt = datum["tgt"]
 
         if self.frame_dropout and is_train:
-            pose, selected_indexes = pose.frame_dropout_normal(dropout_std=self.frame_dropout_std)
+            if self.frame_dropout_type == "normal":
+                pose, selected_indexes = pose.frame_dropout_normal(dropout_mean=self.frame_dropout_mean,
+                                                                   dropout_std=self.frame_dropout_std)
+            else:
+                pose, selected_indexes = pose.frame_dropout_uniform(dropout_min=self.frame_dropout_min,
+                                                                    dropout_max=self.frame_dropout_max)
 
             # selected_indexes are the ones that are _not_ dropped
             # sub-select frame labels that are not dropped

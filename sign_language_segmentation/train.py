@@ -33,7 +33,7 @@ def set_seed(seed: Optional[int] = None):
     random.seed(seed)
 
 
-def train(args: argparse.Namespace):
+def train(args: argparse.Namespace) -> tf.keras.callbacks.History:
     """
     Keras training loop with early-stopping and model checkpoint.
 
@@ -53,7 +53,11 @@ def train(args: argparse.Namespace):
                              test_batch_size=args.test_batch_size,
                              normalize_pose=args.normalize_pose,
                              frame_dropout=args.frame_dropout,
+                             frame_dropout_type=args.frame_dropout_type,
                              frame_dropout_std=args.frame_dropout_std,
+                             frame_dropout_mean=args.frame_dropout_mean,
+                             frame_dropout_min=args.frame_dropout_min,
+                             frame_dropout_max=args.frame_dropout_max,
                              scale_pose=args.scale_pose,
                              min_num_frames=args.min_num_frames,
                              max_num_frames=args.max_num_frames,
@@ -89,11 +93,11 @@ def train(args: argparse.Namespace):
     logging.debug("##############")
 
     with tf.device(args.device):
-        model.fit(train,
-                  epochs=args.epochs,
-                  steps_per_epoch=args.steps_per_epoch,
-                  validation_data=dev,
-                  callbacks=[es, mc])
+        history = model.fit(train,
+                            epochs=args.epochs,
+                            steps_per_epoch=args.steps_per_epoch,
+                            validation_data=dev,
+                            callbacks=[es, mc])
 
     best_model = load_model(args.model_path)
 
@@ -102,6 +106,8 @@ def train(args: argparse.Namespace):
     logging.debug("#############")
 
     best_model.evaluate(test)
+
+    return history
 
 
 def main():

@@ -13,7 +13,7 @@ def parse_args():
     parser.add_argument('--test_batch_size', type=int, default=1, help='batch size for evaluation')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for.')
-    parser.add_argument('--steps_per_epoch', type=int, default=32, help='Number of batches per epoch')
+    parser.add_argument('--steps_per_epoch', type=int, default=None, help='Number of batches per epoch')
     parser.add_argument("--patience", type=int, default=10, help="Patience for early stopping.")
     parser.add_argument("--min_delta", type=float, default=0.0,
                         help="Minimum delta for improvement with early stopping."
@@ -25,12 +25,27 @@ def parse_args():
     parser.add_argument('--encoder_bidirectional', type=bool, default=False, help='Use a bidirectional encoder?')
     parser.add_argument('--hidden_size', type=int, default=256, help='RNN hidden state size.')
 
-    # data set details
+    # data set details and preprocessing
     parser.add_argument('--data_dir', type=str, default="data", metavar='PATH',
                         help="Where to look for tfrecord dataset.")
-    parser.add_argument('--frame_dropout_std', type=float, default=0.3, help='Augmentation drop frames std')
+
+    parser.add_argument('--frame_dropout', action='store_true', default=False, help='Whether to apply frame dropout.')
+    parser.add_argument('--frame_dropout_type', type=str, default=False, choices=["normal", "uniform"],
+                        help='Type of distribution to draw dropout percentage from.')
+    parser.add_argument('--frame_dropout_std', type=float, default=0.1,
+                        help='If frame dropout is used, and dropout percentage is drawn from a normal distribution,'
+                             'this defines the standard deviation.')
+    parser.add_argument('--frame_dropout_mean', type=float, default=0.5,
+                        help='If frame dropout is used, and dropout percentage is drawn from a normal distribution,'
+                             'this defines the mean.')
+    parser.add_argument('--frame_dropout_min', type=float, default=0.0,
+                        help='If frame dropout is used, and dropout percentage is drawn from a uniform distribution,'
+                             'this defines the lower bound.')
+    parser.add_argument('--frame_dropout_max', type=float, default=0.5,
+                        help='If frame dropout is used, and dropout percentage is drawn from a uniform distribution,'
+                             'this defines the upper bound.')
+
     parser.add_argument('--num_keypoints', type=int, default=137, help='Number of pose points')
-    parser.add_argument('--desired_fps', type=int, default=50, help='Convert to this framerate')
     parser.add_argument('--max_num_frames', type=int, default=-1, help='Remove, truncate or split examples with more '
                                                                        'frames (exact behaviour depends '
                                                                        'on --max_num_frames_strategy and --desired_fps)')
@@ -40,6 +55,7 @@ def parse_args():
     parser.add_argument('--max_num_frames_strategy', type=str, default="remove", help='What to do with examples that '
                                                                                       'have too many frames',
                         choices=["remove", "truncate", "slice"])
+
     parser.add_argument('--pose_type', type=str, default="openpose", help='Type of pose features',
                         choices=["openpose", "holistic"])
     parser.add_argument('--normalize_pose', action='store_true', default=False, help='Normalize poses by'
@@ -47,7 +63,6 @@ def parse_args():
     parser.add_argument('--scale_pose', action='store_true', default=False, help='Scale pose to zero mean and'
                                                                                  'unit variance, individually for'
                                                                                  'x and y dimensions.')
-    parser.add_argument('--frame_dropout', action='store_true', default=False, help='Whether to apply frame dropout.')
 
     # directories and checkpoints
     parser.add_argument('--model_path', type=str, default="checkpoints/model.h5", metavar='PATH',
