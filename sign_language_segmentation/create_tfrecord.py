@@ -52,7 +52,7 @@ def miliseconds_to_frame_index(ms: int, fps: int) -> int:
     return int(fps * (ms / 1000))
 
 
-class RecordCReator:
+class RecordCreator:
 
     def __init__(self, pose_type: str, data_dir: str, download_max_retries: int,
                  skip_if_num_frames_zero: bool, label_type: str, max_num_examples: int):
@@ -76,7 +76,7 @@ class RecordCReator:
         if self.max_num_examples == -1:
             self.max_num_examples = np.inf
 
-        self.config = SignDatasetConfig(name="annotations-pose",
+        self.config = SignDatasetConfig(name="annotations-pose-" + self.pose_type,
                                         version="1.0.0",
                                         include_video=False,
                                         include_pose=self.pose_type)
@@ -226,7 +226,7 @@ def main():
     logging.basicConfig(level=logging.DEBUG)
     logging.debug(args)
 
-    tfrecord_creator = RecordCReator(pose_type=args.pose_type,
+    tfrecord_creator = RecordCreator(pose_type=args.pose_type,
                                      data_dir=args.data_dir,
                                      download_max_retries=args.download_max_retries,
                                      skip_if_num_frames_zero=args.skip_if_num_frames_zero,
