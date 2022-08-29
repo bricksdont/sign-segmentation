@@ -178,7 +178,7 @@ class RecordCreator:
                     break
 
                 elan_path = datum["paths"]["eaf"].numpy().decode('utf-8')
-                sentences = get_elan_sentences(elan_path)
+                sentences = list(get_elan_sentences(elan_path))
 
                 for person in ["a", "b"]:
 
